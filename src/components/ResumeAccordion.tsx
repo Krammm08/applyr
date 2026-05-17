@@ -79,25 +79,27 @@ const ResumeAccordion = ({
             {openSection === 'template' ? '-' : '+'}
           </span>
         </button>
-        {openSection === 'template' ? (
-          <div className="accordion-panel" id="section-template">
-            <div className="form-grid">
-              <label>
-                Resume Font
-                <select
-                  value={previewFont}
-                  onChange={(event) => onPreviewFontChange(event.target.value)}
-                >
-                  <option value="Times New Roman">Times New Roman</option>
-                  <option value="Georgia">Georgia</option>
-                  <option value="Garamond">Garamond</option>
-                  <option value="Arial">Arial</option>
-                  <option value="Calibri">Calibri</option>
-                </select>
-              </label>
-            </div>
+        <div
+          className={`accordion-panel${openSection === 'template' ? ' is-open' : ''}`}
+          id="section-template"
+          aria-hidden={openSection !== 'template'}
+        >
+          <div className="form-grid">
+            <label>
+              Resume Font
+              <select
+                value={previewFont}
+                onChange={(event) => onPreviewFontChange(event.target.value)}
+              >
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Garamond">Garamond</option>
+                <option value="Arial">Arial</option>
+                <option value="Calibri">Calibri</option>
+              </select>
+            </label>
           </div>
-        ) : null}
+        </div>
       </article>
 
       <article className="accordion-item">
@@ -113,9 +115,12 @@ const ResumeAccordion = ({
             {openSection === 'contact' ? '-' : '+'}
           </span>
         </button>
-        {openSection === 'contact' ? (
-          <div className="accordion-panel" id="section-contact">
-            <div className="form-grid">
+        <div
+          className={`accordion-panel${openSection === 'contact' ? ' is-open' : ''}`}
+          id="section-contact"
+          aria-hidden={openSection !== 'contact'}
+        >
+          <div className="form-grid">
               <label>
                 Full Name*
                 <input
@@ -195,9 +200,8 @@ const ResumeAccordion = ({
                   placeholder="85000"
                 />
               </label>
-            </div>
           </div>
-        ) : null}
+        </div>
       </article>
 
       <article className="accordion-item">
@@ -213,9 +217,12 @@ const ResumeAccordion = ({
             {openSection === 'education' ? '-' : '+'}
           </span>
         </button>
-        {openSection === 'education' ? (
-          <div className="accordion-panel" id="section-education">
-            <div className="form-grid">
+        <div
+          className={`accordion-panel${openSection === 'education' ? ' is-open' : ''}`}
+          id="section-education"
+          aria-hidden={openSection !== 'education'}
+        >
+          <div className="form-grid">
               {education.map((entry, index) => (
                 <article className="repeat-block" key={entry.educationId}>
                   <div className="repeat-header">
@@ -262,12 +269,11 @@ const ResumeAccordion = ({
                   </label>
                 </article>
               ))}
-            </div>
-            <button type="button" className="add-button" onClick={addEducation}>
-              + Add Education Entry
-            </button>
           </div>
-        ) : null}
+          <button type="button" className="add-button" onClick={addEducation}>
+            + Add Education Entry
+          </button>
+        </div>
       </article>
 
       <article className="accordion-item">
@@ -283,10 +289,13 @@ const ResumeAccordion = ({
             {openSection === 'experience' ? '-' : '+'}
           </span>
         </button>
-        {openSection === 'experience' ? (
-          <div className="accordion-panel" id="section-experience">
-            <p className="section-caption">Employment History</p>
-            <div className="form-grid">
+        <div
+          className={`accordion-panel${openSection === 'experience' ? ' is-open' : ''}`}
+          id="section-experience"
+          aria-hidden={openSection !== 'experience'}
+        >
+          <p className="section-caption">Employment History</p>
+          <div className="form-grid">
               {employmentHistory.map((entry, index) => (
                 <article className="repeat-block" key={entry.EmploymentHistoryId}>
                   <div className="repeat-header">
@@ -325,13 +334,13 @@ const ResumeAccordion = ({
                   </label>
                 </article>
               ))}
-            </div>
-            <button type="button" className="add-button" onClick={addEmployment}>
-              + Add Employment Block
-            </button>
+          </div>
+          <button type="button" className="add-button" onClick={addEmployment}>
+            + Add Employment Block
+          </button>
 
-            <p className="section-caption">References</p>
-            <div className="form-grid">
+          <p className="section-caption">References</p>
+          <div className="form-grid">
               {references.map((entry, index) => (
                 <article className="repeat-block" key={entry.referenceId}>
                   <div className="repeat-header">
@@ -378,12 +387,11 @@ const ResumeAccordion = ({
                   </label>
                 </article>
               ))}
-            </div>
-            <button type="button" className="add-button" onClick={addReference}>
-              + Add Reference Block
-            </button>
           </div>
-        ) : null}
+          <button type="button" className="add-button" onClick={addReference}>
+            + Add Reference Block
+          </button>
+        </div>
       </article>
 
       <article className="accordion-item">
@@ -399,9 +407,12 @@ const ResumeAccordion = ({
             {openSection === 'compliance' ? '-' : '+'}
           </span>
         </button>
-        {openSection === 'compliance' ? (
-          <div className="accordion-panel" id="section-compliance">
-            <div className="form-grid">
+        <div
+          className={`accordion-panel${openSection === 'compliance' ? ' is-open' : ''}`}
+          id="section-compliance"
+          aria-hidden={openSection !== 'compliance'}
+        >
+          <div className="form-grid">
               <label>
                 Have you ever had a criminal conviction?*
                 <select
@@ -459,21 +470,20 @@ const ResumeAccordion = ({
                   }}
                 />
               </label>
-            </div>
-
-            {uploadState.message ? (
-              <p className={uploadState.uploading ? 'upload-note' : 'upload-note done'}>
-                {uploadState.message}
-              </p>
-            ) : null}
-
-            {jobApplication.resumeFileUrl ? (
-              <p className="upload-link">
-                Resume URL: <a href={jobApplication.resumeFileUrl}>{jobApplication.resumeFileUrl}</a>
-              </p>
-            ) : null}
           </div>
-        ) : null}
+
+          {uploadState.message ? (
+            <p className={uploadState.uploading ? 'upload-note' : 'upload-note done'}>
+              {uploadState.message}
+            </p>
+          ) : null}
+
+          {jobApplication.resumeFileUrl ? (
+            <p className="upload-link">
+              Resume URL: <a href={jobApplication.resumeFileUrl}>{jobApplication.resumeFileUrl}</a>
+            </p>
+          ) : null}
+        </div>
       </article>
     </div>
   )

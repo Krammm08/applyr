@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import type {
   Applicant,
@@ -39,6 +40,7 @@ type PageBlock = {
 
 const MAX_LINES_PER_PAGE = 46
 const HEADER_LINES = 6
+const PAGE_WIDTH_PX = 794
 
 const chunkSectionsIntoPages = (
   sections: SectionBlock[],
@@ -98,6 +100,27 @@ const ResumePreview = ({
   const pageStyle = {
     ['--resume-font' as const]: previewFont,
   } as CSSProperties
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
+
+  useEffect(() => {
+    const target = containerRef.current
+    if (!target) {
+      return
+    }
+
+    const updateScale = () => {
+      const available = target.clientWidth - 16
+      const nextScale = Math.min(1, available / PAGE_WIDTH_PX)
+      setScale(Number.isFinite(nextScale) ? nextScale : 1)
+    }
+
+    updateScale()
+    const observer = new ResizeObserver(updateScale)
+    observer.observe(target)
+
+    return () => observer.disconnect()
+  }, [])
 
   const sections: SectionBlock[] = [
     {
@@ -171,8 +194,15 @@ const ResumePreview = ({
   const pages = chunkSectionsIntoPages(sections)
 
   return (
-    <div className="preview-scroll" aria-label="Resume preview document">
-      <div className="preview-pages">
+    <div
+      className="preview-scroll"
+      aria-label="Resume preview document"
+      ref={containerRef}
+    >
+      <div
+        className="preview-pages"
+        style={{ transform: `scale(${scale})` }}
+      >
         {pages.map((page, pageIndex) => (
           <article
             className="preview-page"

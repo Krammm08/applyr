@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import './App.css'
+import './App.scss'
 import ResumeAccordion from './components/ResumeAccordion'
 import ResumePreview from './components/ResumePreview'
 import type {
@@ -86,6 +86,7 @@ function App() {
   ])
 
   const [previewFont, setPreviewFont] = useState('Times New Roman')
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 
   const [uploadState, setUploadState] = useState({ uploading: false, message: '' })
 
@@ -221,7 +222,7 @@ function App() {
         <p className="kicker">Accordion inputs on the left, live preview on the right.</p>
       </header>
       <div className="resume-shell">
-        <section className="panel">
+        <section className="panel panel-scroll">
           <ResumeAccordion
             applicant={applicant}
             jobApplication={jobApplication}
@@ -245,7 +246,18 @@ function App() {
             handleResumeUpload={handleResumeUpload}
           />
         </section>
-        <section className="panel preview-panel">
+        <section
+          className="panel panel-scroll preview-panel"
+          role="button"
+          tabIndex={0}
+          onClick={() => setIsPreviewOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              setIsPreviewOpen(true)
+            }
+          }}
+        >
           <ResumePreview
             applicant={applicant}
             jobApplication={jobApplication}
@@ -256,6 +268,28 @@ function App() {
           />
         </section>
       </div>
+
+      {isPreviewOpen ? (
+        <div className="preview-modal" onClick={() => setIsPreviewOpen(false)}>
+          <div className="preview-modal-content" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              className="preview-modal-close"
+              onClick={() => setIsPreviewOpen(false)}
+            >
+              Close Preview
+            </button>
+            <ResumePreview
+              applicant={applicant}
+              jobApplication={jobApplication}
+              education={education}
+              employmentHistory={employmentHistory}
+              references={references}
+              previewFont={previewFont}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
