@@ -17,7 +17,7 @@ const Accordion: React.FC<{
         >
           <span>{title}</span>
           <span className="accordion-icon" aria-hidden="true">
-            {isOpen ? '-' : '+'}
+            {isOpen ? '━' : '✚'}
           </span>
         </button>
         <div
@@ -48,7 +48,7 @@ const SectionRow: React.FC<{
           <span className="row-subtitle">{subtitle}</span>
           </div>
           <span className="accordion-icon" aria-hidden="true">
-            &gt;
+            ➤
           </span>
         </button>
   )

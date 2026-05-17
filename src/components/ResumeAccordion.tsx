@@ -133,12 +133,6 @@ const ResumeAccordion = ({
           subtitle="Name, address, and position"
           callback={() => setActivePanel({ type: 'contact' })}
         />
-  
-        <SectionRow
-          title="Compliance & Upload"
-          subtitle="Agreements and resume file"
-          callback={() => setActivePanel({ type: 'compliance' })}
-        />
 
         <Accordion title="Education">
           <div>
@@ -237,6 +231,12 @@ const ResumeAccordion = ({
             + Add
           </button>
       </Accordion>
+
+      <SectionRow
+          title="Compliance & Upload"
+          subtitle="Agreements and resume file"
+          callback={() => setActivePanel({ type: 'compliance' })}
+        />
       </div>
     </div>
   )
