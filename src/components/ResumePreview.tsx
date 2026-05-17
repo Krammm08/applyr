@@ -40,7 +40,6 @@ type PageBlock = {
 
 const MAX_LINES_PER_PAGE = 46
 const HEADER_LINES = 6
-const PAGE_WIDTH_PX = 794
 
 const chunkSectionsIntoPages = (
   sections: SectionBlock[],
@@ -101,6 +100,7 @@ const ResumePreview = ({
     ['--resume-font' as const]: previewFont,
   } as CSSProperties
   const containerRef = useRef<HTMLDivElement>(null)
+  const pageRef = useRef<HTMLElement | null>(null)
   const [scale, setScale] = useState(1)
 
   useEffect(() => {
@@ -111,7 +111,8 @@ const ResumePreview = ({
 
     const updateScale = () => {
       const available = target.clientWidth - 16
-      const nextScale = Math.min(1, available / PAGE_WIDTH_PX)
+      const pageWidth = pageRef.current?.offsetWidth ?? available
+      const nextScale = pageWidth > 0 ? Math.min(1, available / pageWidth) : 1
       setScale(Number.isFinite(nextScale) ? nextScale : 1)
     }
 
@@ -208,6 +209,7 @@ const ResumePreview = ({
             className="preview-page"
             style={pageStyle}
             key={`page-${pageIndex}`}
+            ref={pageIndex === 0 ? pageRef : undefined}
           >
             <div className="preview">
               {page.showHeader ? (
