@@ -1,4 +1,4 @@
-import { useState, useEffect, Dispatch, SetStateAction } from 'react'
+import { useState, useEffect, type Dispatch, type SetStateAction } from 'react'
 import type { DragEvent } from 'react'
 import type {
   Applicant,
@@ -190,7 +190,7 @@ const ResumeAccordion = ({
             </button>
           </div>
         ))}
-            <button type="button" className="add-button small" onClick={addEducation}>
+            <button type="button" className="add-button small" onClick={() =>{addEducation(); setActivePanel({ type: 'education', index: education.length })}}>
               + Add
             </button>
           </div>
@@ -269,11 +269,11 @@ const ResumeAccordion = ({
     </div>
   )
 
-  const renderEditorHeader = (title: string, onBack: () => void) => (
+  const renderEditorHeader = (title: string, onBack: () => void, allowBack?: boolean) => (
     <div className="section-editor-header">
-      <button type="button" className="back-button" onClick={onBack}>
-        Back
-      </button>
+        <button type="button" className={`back-button ${allowBack ? '' : 'disabled-btn'}`} onClick={onBack} disabled={!allowBack}>
+          Back
+        </button>
       <h2>{title}</h2>
     </div>
   )
@@ -287,7 +287,7 @@ const ResumeAccordion = ({
 
   const renderContact = () => (
     <div className="section-editor">
-      {renderEditorHeader('Contact Info', () => setActivePanel({ type: 'list' }))}
+      {renderEditorHeader('Contact Info', () => setActivePanel({ type: 'list' }), applicant.applicantName !== '' && applicant.homeAddress !== '' && applicant.phoneNumber !== '' && applicant.emailAddress !== '' && applicant.citizenshipStatus !== '' && jobApplication.appliedPosition !== '')}
       <div className="form-grid">
         <label>
           Full Name*
@@ -380,7 +380,7 @@ const ResumeAccordion = ({
 
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Education ${index + 1}`, () => setActivePanel({ type: 'list' }))}
+        {renderEditorHeader(`Education ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.schoolName !== '' && entry.degreeReceived !== '' && entry.schoolLocation !== '' && entry.yearsAttended !== '')}
         <div className="form-grid">
           <label>
             School Name*
@@ -441,7 +441,7 @@ const ResumeAccordion = ({
 
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Employment ${index + 1}`, () => setActivePanel({ type: 'list' }))}
+        {renderEditorHeader(`Employment ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.companyName !== '' && entry.workPosition !== '' && entry.workAddress !== '' && entry.reasonForLeaving !== '')}
         <div className="form-grid">
           <label>
             Company Name*
@@ -494,7 +494,7 @@ const ResumeAccordion = ({
 
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Reference ${index + 1}`, () => setActivePanel({ type: 'list' }))}
+        {renderEditorHeader(`Reference ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.referenceName !== '' && entry.referenceTitle !== '' && entry.referenceCompany !== '' && entry.referencePhone !== '')}
         <div className="form-grid">
           <label>
             Name*
@@ -549,7 +549,7 @@ const ResumeAccordion = ({
 
   const renderCompliance = () => (
     <div className="section-editor">
-      {renderEditorHeader('Compliance & Upload', () => setActivePanel({ type: 'list' }))}
+      {renderEditorHeader('Compliance & Upload', () => setActivePanel({ type: 'list' }), applicant.hasCriminalHistory !== null && applicant.agreesToDrugTest !== null)}
       <div className="form-grid">
         <label>
           Have you ever had a criminal conviction?*

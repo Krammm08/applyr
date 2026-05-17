@@ -293,6 +293,11 @@
   cursor: pointer;
 }
 
+.disabled-btn {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .remove-button {
   align-self: flex-start;
   border: 1px dashed rgba(162, 38, 25, 0.4);
