@@ -28,10 +28,13 @@ type ResumeAccordionProps = {
   updateReference: (index: number, field: keyof ApplicantReference, value: string) => void
   addEducation: () => void
   removeEducation: (index: number) => void
+  reorderEducation: (fromIndex: number, toIndex: number) => void
   addEmployment: () => void
   removeEmployment: (index: number) => void
+  reorderEmployment: (fromIndex: number, toIndex: number) => void
   addReference: () => void
   removeReference: (index: number) => void
+  reorderReferences: (fromIndex: number, toIndex: number) => void
   handleResumeUpload: (file: File | null) => Promise<void>
 }
 
@@ -51,16 +54,48 @@ const ResumeAccordion = ({
   updateReference,
   addEducation,
   removeEducation,
+  reorderEducation,
   addEmployment,
   removeEmployment,
+  reorderEmployment,
   addReference,
   removeReference,
+  reorderReferences,
   handleResumeUpload,
 }: ResumeAccordionProps) => {
   const [openSection, setOpenSection] = useState('contact')
+  const [dragEducationIndex, setDragEducationIndex] = useState<number | null>(null)
+  const [dragEmploymentIndex, setDragEmploymentIndex] = useState<number | null>(null)
+  const [dragReferenceIndex, setDragReferenceIndex] = useState<number | null>(null)
 
   const toggleSection = (sectionId: string) => {
     setOpenSection((prev) => (prev === sectionId ? '' : sectionId))
+  }
+
+  const handleDragStart = (
+    setter: (value: number | null) => void,
+    index: number,
+    event: React.DragEvent<HTMLButtonElement>,
+  ) => {
+    setter(index)
+    event.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragEnd = (setter: (value: number | null) => void) => {
+    setter(null)
+  }
+
+  const handleDrop = (
+    fromIndex: number | null,
+    toIndex: number,
+    reorder: (from: number, to: number) => void,
+    setter: (value: number | null) => void,
+  ) => {
+    if (fromIndex === null || fromIndex === toIndex) {
+      return
+    }
+    reorder(fromIndex, toIndex)
+    setter(null)
   }
 
   return (
@@ -224,7 +259,26 @@ const ResumeAccordion = ({
         >
           <div className="form-grid">
               {education.map((entry, index) => (
-                <article className="repeat-block" key={entry.educationId}>
+                <article
+                  className={`repeat-block${dragEducationIndex === index ? ' is-dragging' : ''}`}
+                  key={entry.educationId}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() =>
+                    handleDrop(dragEducationIndex, index, reorderEducation, setDragEducationIndex)
+                  }
+                >
+                  <button
+                    type="button"
+                    className="repeat-handle"
+                    aria-label={`Reorder education ${index + 1}`}
+                    draggable
+                    onDragStart={(event) =>
+                      handleDragStart(setDragEducationIndex, index, event)
+                    }
+                    onDragEnd={() => handleDragEnd(setDragEducationIndex)}
+                  >
+                    ::
+                  </button>
                   <div className="repeat-header">
                     <h3>School {index + 1}</h3>
                     <button type="button" onClick={() => removeEducation(index)}>
@@ -297,7 +351,26 @@ const ResumeAccordion = ({
           <p className="section-caption">Employment History</p>
           <div className="form-grid">
               {employmentHistory.map((entry, index) => (
-                <article className="repeat-block" key={entry.EmploymentHistoryId}>
+                <article
+                  className={`repeat-block${dragEmploymentIndex === index ? ' is-dragging' : ''}`}
+                  key={entry.EmploymentHistoryId}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() =>
+                    handleDrop(dragEmploymentIndex, index, reorderEmployment, setDragEmploymentIndex)
+                  }
+                >
+                  <button
+                    type="button"
+                    className="repeat-handle"
+                    aria-label={`Reorder employment ${index + 1}`}
+                    draggable
+                    onDragStart={(event) =>
+                      handleDragStart(setDragEmploymentIndex, index, event)
+                    }
+                    onDragEnd={() => handleDragEnd(setDragEmploymentIndex)}
+                  >
+                    ::
+                  </button>
                   <div className="repeat-header">
                     <h3>Employment {index + 1}</h3>
                     <button type="button" onClick={() => removeEmployment(index)}>
@@ -342,7 +415,26 @@ const ResumeAccordion = ({
           <p className="section-caption">References</p>
           <div className="form-grid">
               {references.map((entry, index) => (
-                <article className="repeat-block" key={entry.referenceId}>
+                <article
+                  className={`repeat-block${dragReferenceIndex === index ? ' is-dragging' : ''}`}
+                  key={entry.referenceId}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() =>
+                    handleDrop(dragReferenceIndex, index, reorderReferences, setDragReferenceIndex)
+                  }
+                >
+                  <button
+                    type="button"
+                    className="repeat-handle"
+                    aria-label={`Reorder reference ${index + 1}`}
+                    draggable
+                    onDragStart={(event) =>
+                      handleDragStart(setDragReferenceIndex, index, event)
+                    }
+                    onDragEnd={() => handleDragEnd(setDragReferenceIndex)}
+                  >
+                    ::
+                  </button>
                   <div className="repeat-header">
                     <h3>Reference {index + 1}</h3>
                     <button type="button" onClick={() => removeReference(index)}>

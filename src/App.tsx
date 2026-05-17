@@ -68,6 +68,13 @@ const createReference = (applicantId: string): ApplicantReference => ({
   referenceEmail: '',
 })
 
+const moveItem = <T,>(items: T[], fromIndex: number, toIndex: number) => {
+  const next = [...items]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, moved)
+  return next
+}
+
 const starterApplicant = createEmptyApplicant()
 
 function App() {
@@ -157,6 +164,18 @@ function App() {
     setReferences((prev) => (prev.length > 1 ? prev.filter((_, current) => current !== index) : prev))
   }
 
+  const reorderEducation = (fromIndex: number, toIndex: number) => {
+    setEducation((prev) => moveItem(prev, fromIndex, toIndex))
+  }
+
+  const reorderEmployment = (fromIndex: number, toIndex: number) => {
+    setEmploymentHistory((prev) => moveItem(prev, fromIndex, toIndex))
+  }
+
+  const reorderReferences = (fromIndex: number, toIndex: number) => {
+    setReferences((prev) => moveItem(prev, fromIndex, toIndex))
+  }
+
 
   const handleResumeUpload = async (file: File | null) => {
     if (!file) {
@@ -238,10 +257,13 @@ function App() {
             updateReference={updateReference}
             addEducation={addEducation}
             removeEducation={removeEducation}
+            reorderEducation={reorderEducation}
             addEmployment={addEmployment}
             removeEmployment={removeEmployment}
+            reorderEmployment={reorderEmployment}
             addReference={addReference}
             removeReference={removeReference}
+            reorderReferences={reorderReferences}
             handleResumeUpload={handleResumeUpload}
           />
         </section>

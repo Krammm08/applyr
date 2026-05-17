@@ -29,7 +29,7 @@
 
 .resume-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   gap: 18px;
   align-items: stretch;
   flex: 1;
@@ -136,20 +136,41 @@
 }
 
 .repeat-block {
-  border: 1px solid var(--stroke-soft);
-  border-radius: 14px;
-  background: #fff;
-  padding: 14px;
+  border-bottom: 1px solid var(--stroke-soft);
+  padding: 12px 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 20px repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
+.repeat-block.is-dragging {
+  opacity: 0.6;
+}
+
+.repeat-handle {
+  grid-row: 1 / -1;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 700;
+  cursor: grab;
+  padding: 0;
+  line-height: 1;
+}
+
+.repeat-handle:active {
+  cursor: grabbing;
+}
+
 .repeat-header {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.repeat-block label {
+  grid-column: 2 / -1;
 }
 
 .repeat-header h3 {
