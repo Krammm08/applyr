@@ -151,17 +151,17 @@ function App() {
   }
 
   const removeEducation = (index: number) => {
-    setEducation((prev) => (prev.length > 1 ? prev.filter((_, current) => current !== index) : prev))
+    setEducation((prev) => (prev.filter((_, current) => current !== index)))
   }
 
   const removeEmployment = (index: number) => {
     setEmploymentHistory((prev) =>
-      prev.length > 1 ? prev.filter((_, current) => current !== index) : prev,
+      prev.filter((_, current) => current !== index),
     )
   }
 
   const removeReference = (index: number) => {
-    setReferences((prev) => (prev.length > 1 ? prev.filter((_, current) => current !== index) : prev))
+    setReferences((prev) => (prev.filter((_, current) => current !== index)))
   }
 
   const reorderEducation = (fromIndex: number, toIndex: number) => {
