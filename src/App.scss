@@ -9,6 +9,8 @@
   box-shadow: 0 30px 70px rgba(4, 41, 56, 0.18);
   display: flex;
   flex-direction: column;
+  background-image: radial-gradient(#dbbaba 1px, transparent 0);
+  background-size: 30px 30px;
 }
 
 .topbar {
@@ -54,10 +56,91 @@
   overflow: hidden;
 }
 
+
 .accordion {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.accordion-item {
+  border: 1px solid var(--stroke-soft);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.accordion-trigger {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
+.accordion-icon {
+  font-size: 1.1rem;
+  color: var(--accent-dark);
+}
+
+.accordion-panel {
+  padding: 0 16px;
+  border-top: 1px solid transparent;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  overflow: hidden;
+  transition: max-height 0.03s ease, opacity 0.1s ease, transform 0.1s ease, padding 0.2s ease;
+}
+
+.accordion-panel.is-open {
+  padding: 10px 16px 16px;
+  border-top-color: var(--stroke-soft);
+  max-height: 1400px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.section-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--stroke-soft);
+  background: #fff;
+  color: var(--text-strong);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-strong);
+  cursor: pointer;
+
+  .section-button-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }
 
 .section-list {
@@ -209,19 +292,6 @@
   font-weight: 700;
   color: var(--text-strong);
   cursor: pointer;
-}
-
-.accordion-icon {
-  font-size: 1.1rem;
-  color: var(--accent-dark);
-}
-
-.accordion-panel {
-  display: none;
-}
-
-.accordion-panel.is-open {
-  display: block;
 }
 
 .form-grid {

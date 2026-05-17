@@ -8,17 +8,50 @@ const Accordion: React.FC<{
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className={`accordion ${isOpen ? 'open' : ''}`}>
-      <div
-        className="accordion-header"
-        onClick={() => setIsOpen((prev) => !prev)}
-      >
-        <span className="accordion-title">{title}</span>
-        {subtitle && <span className="accordion-subtitle">{subtitle}</span>}
-      </div>
-      {isOpen && <div className="accordion-content">{children}</div>}
-    </div>
+    <article className="accordion-item">
+        <button
+          type="button"
+          className="accordion-trigger"
+          aria-controls="section-template"
+          onClick={() => setIsOpen((prev) => !prev)}
+        >
+          <span>{title}</span>
+          <span className="accordion-icon" aria-hidden="true">
+            {isOpen ? '-' : '+'}
+          </span>
+        </button>
+        <div
+          className={`accordion-panel${isOpen ? ' is-open' : ''}`}
+          id="section-template"
+          aria-hidden={!isOpen}
+        >
+          {children}
+        </div>
+      </article>
   )
 }
 
-export default Accordion
+const SectionRow: React.FC<{
+  title: string
+  subtitle?: string
+  callback: () => void
+}> = ({ title, subtitle, callback }) => {
+
+  return (
+  <button
+          type="button"
+          className="section-button simple"
+          onClick={() => callback()}
+        >
+          <div className="section-button-content">
+          <span className="row-title">{title}</span>
+          <span className="row-subtitle">{subtitle}</span>
+          </div>
+          <span className="accordion-icon" aria-hidden="true">
+            &gt;
+          </span>
+        </button>
+  )
+}
+
+export { Accordion, SectionRow }

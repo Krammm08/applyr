@@ -7,6 +7,7 @@ import type {
   EmploymentHistory,
   JobApplication,
 } from '../types'
+import {Accordion, SectionRow} from './Accordion'
 
 type UploadState = {
   uploading: boolean
@@ -112,39 +113,35 @@ const ResumeAccordion = ({
     <div className="section-list" aria-label="Resume sections">
       <div className="section-group">
         <h3 className="section-group-title">Base</h3>
-        <button
-          type="button"
-          className="section-row simple"
-          onClick={() => setActivePanel({ type: 'template' })}
-        >
-          <span className="row-title">Resume Template</span>
-          <span className="row-subtitle">{previewFont}</span>
-        </button>
-        <button
-          type="button"
-          className="section-row simple"
-          onClick={() => setActivePanel({ type: 'contact' })}
-        >
-          <span className="row-title">Contact Info</span>
-          <span className="row-subtitle">Name, address, and position</span>
-        </button>
-        <button
-          type="button"
-          className="section-row simple"
-          onClick={() => setActivePanel({ type: 'compliance' })}
-        >
-          <span className="row-title">Compliance & Upload</span>
-          <span className="row-subtitle">Agreements and resume file</span>
-        </button>
-      </div>
+        <Accordion title="Resume Template" subtitle="Choose your resume template">
+          <div className="form-grid">
+            <label>
+              Resume Font
+              <select value={previewFont} onChange={(event) => onPreviewFontChange(event.target.value)}>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Garamond">Garamond</option>
+                <option value="Arial">Arial</option>
+                <option value="Calibri">Calibri</option>
+              </select>
+            </label>
+          </div>
+        </Accordion>
+    
+        <SectionRow
+          title="Contact Info"
+          subtitle="Name, address, and position"
+          callback={() => setActivePanel({ type: 'contact' })}
+        />
+  
+        <SectionRow
+          title="Compliance & Upload"
+          subtitle="Agreements and resume file"
+          callback={() => setActivePanel({ type: 'compliance' })}
+        />
 
-      <div className="section-group">
-        <div className="section-group-header">
-          <h3 className="section-group-title">Education</h3>
-          <button type="button" className="add-button small" onClick={addEducation}>
-            + Add
-          </button>
-        </div>
+        <Accordion title="Education">
+          <div>
         {education.map((entry, index) => (
           <div
             className={`section-row${dragEducationIndex === index ? ' is-dragging' : ''}`}
@@ -171,21 +168,19 @@ const ResumeAccordion = ({
             </button>
           </div>
         ))}
-      </div>
-
-      <div className="section-group">
-        <div className="section-group-header">
-          <h3 className="section-group-title">Employment</h3>
-          <button type="button" className="add-button small" onClick={addEmployment}>
-            + Add
-          </button>
-        </div>
+            <button type="button" className="add-button small" onClick={addEducation}>
+              + Add
+            </button>
+          </div>
+        </Accordion>
+    
+      <Accordion title="Employment">
         {employmentHistory.map((entry, index) => (
           <div
-            className={`section-row${dragEmploymentIndex === index ? ' is-dragging' : ''}`}
-            key={entry.EmploymentHistoryId}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={() => handleDrop(dragEmploymentIndex, index, reorderEmployment, setDragEmploymentIndex)}
+          className={`section-row${dragEmploymentIndex === index ? ' is-dragging' : ''}`}
+          key={entry.EmploymentHistoryId}
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={() => handleDrop(dragEmploymentIndex, index, reorderEmployment, setDragEmploymentIndex)}
           >
             <button
               type="button"
@@ -194,7 +189,7 @@ const ResumeAccordion = ({
               draggable
               onDragStart={(event) => handleDragStart(setDragEmploymentIndex, index, event)}
               onDragEnd={() => handleDragEnd(setDragEmploymentIndex)}
-            >
+              >
               ::
             </button>
             <button type="button" className="row-main" onClick={() => openEmployment(index)}>
@@ -206,15 +201,12 @@ const ResumeAccordion = ({
             </button>
           </div>
         ))}
-      </div>
-
-      <div className="section-group">
-        <div className="section-group-header">
-          <h3 className="section-group-title">References</h3>
-          <button type="button" className="add-button small" onClick={addReference}>
+        <button type="button" className="add-button small" onClick={addEmployment}>
             + Add
           </button>
-        </div>
+      </Accordion>
+
+      <Accordion title="References">
         {references.map((entry, index) => (
           <div
             className={`section-row${dragReferenceIndex === index ? ' is-dragging' : ''}`}
@@ -241,6 +233,10 @@ const ResumeAccordion = ({
             </button>
           </div>
         ))}
+<button type="button" className="add-button small" onClick={addReference}>
+            + Add
+          </button>
+      </Accordion>
       </div>
     </div>
   )
@@ -257,18 +253,7 @@ const ResumeAccordion = ({
   const renderTemplate = () => (
     <div className="section-editor">
       {renderEditorHeader('Resume Template', () => setActivePanel({ type: 'list' }))}
-      <div className="form-grid">
-        <label>
-          Resume Font
-          <select value={previewFont} onChange={(event) => onPreviewFontChange(event.target.value)}>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Garamond">Garamond</option>
-            <option value="Arial">Arial</option>
-            <option value="Calibri">Calibri</option>
-          </select>
-        </label>
-      </div>
+      
     </div>
   )
 
@@ -612,7 +597,7 @@ const ResumeAccordion = ({
   )
 
   return (
-    <div className="accordion" aria-label="Resume input sections">
+    <div className="" aria-label="Resume input sections">
       {activePanel.type === 'list' ? renderList() : null}
       {activePanel.type === 'template' ? renderTemplate() : null}
       {activePanel.type === 'contact' ? renderContact() : null}
