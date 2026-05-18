@@ -1,4 +1,3 @@
-import { useState } from 'react'
 
 const Accordion: React.FC<{
   title: string
@@ -18,7 +17,10 @@ const Accordion: React.FC<{
             onToggle?.();
           }}
         >
-          <span>{title}</span>
+          <div className="accordion-title-container">
+            <span>{title}</span>
+            {subtitle && <span className="accordion-subtitle" style={{display: 'block', fontSize: '0.85em', fontWeight: 'normal', opacity: 0.8, marginTop: '2px'}}>{subtitle}</span>}
+          </div>
           <span className="accordion-icon" aria-hidden="true">
             {isOpen ? '━' : '✚'}
           </span>

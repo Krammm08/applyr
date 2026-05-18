@@ -3,12 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import ApplicationThumbnail from '../components/ApplicationThumbnail'
 import type {
   Applicant,
-  ApplicantReference,
   Education,
   EmploymentHistory,
   JobApplication,
-  Training,
-  Certificate,
 } from '../types'
 
 export type AuthSession = {
@@ -24,9 +21,6 @@ type HomePageProps = {
   previewFont: string
   education: Education[]
   employmentHistory: EmploymentHistory[]
-  references: ApplicantReference[]
-  trainings: Training[]
-  certificates: Certificate[]
   authSession: AuthSession | null
   isAuthLoading: boolean
   authError: string
@@ -66,9 +60,6 @@ const HomePage = ({
   previewFont,
   education,
   employmentHistory,
-  references,
-  trainings,
-  certificates,
   authSession,
   isAuthLoading,
   authError,
@@ -205,9 +196,9 @@ const HomePage = ({
                     jobApplication={application}
                     education={education}
                     employmentHistory={employmentHistory}
-                    references={references}
-                    trainings={trainings}
-                    certificates={certificates}
+                    references={application.references || []}
+                    trainings={application.trainings || []}
+                    certificates={application.certificates || []}
                     previewFont={previewFont}
                     resumeTemplate={resumeTemplate}
                   />

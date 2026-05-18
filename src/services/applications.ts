@@ -1,12 +1,13 @@
 import type { Applicant, JobApplication } from '../types'
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'https://eliazar.heliohost.us/backend'
+const API_BASE_URL = 'http://localhost:8000'
+  // import.meta.env.VITE_API_BASE_URL ?? 'https://eliazar.heliohost.us/backend'
 
 const requestJson = async <T>(
   url: string,
   body: Record<string, unknown>,
 ) => {
+  console.log(body)
   const response = await fetch(url, {
     method: 'POST',
     headers: {

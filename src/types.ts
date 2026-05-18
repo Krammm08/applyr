@@ -19,6 +19,9 @@ export type JobApplication = {
   availableStartDate: string
   expectedSalary: string
   resumeFileUrl: string
+  references?: ApplicantReference[]
+  trainings?: Training[]
+  certificates?: Certificate[]
 }
 
 export type Education = {

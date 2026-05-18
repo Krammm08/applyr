@@ -294,7 +294,7 @@ const ResumeAccordion = ({
             </button>
           </div>
         ))}
-        <button type="button" className="add-button small" onClick={addEmployment}>
+        <button type="button" className="add-button small" onClick={() => { addEmployment(); setActivePanel({ type: 'employment', index: employmentHistory.length }); }}>
             + Add
           </button>
       </Accordion>
@@ -326,7 +326,7 @@ const ResumeAccordion = ({
             </button>
           </div>
         ))}
-<button type="button" className="add-button small" onClick={addReference}>
+        <button type="button" className="add-button small" onClick={() => { addReference(); setActivePanel({ type: 'reference', index: references.length }); }}>
             + Add
           </button>
       </Accordion>
@@ -358,7 +358,7 @@ const ResumeAccordion = ({
             </button>
           </div>
         ))}
-        <button type="button" className="add-button small" onClick={addTraining}>
+        <button type="button" className="add-button small" onClick={() => { addTraining(); setActivePanel({ type: 'training', index: trainings.length }); }}>
           + Add
         </button>
       </Accordion>
@@ -390,7 +390,7 @@ const ResumeAccordion = ({
             </button>
           </div>
         ))}
-        <button type="button" className="add-button small" onClick={addCertificate}>
+        <button type="button" className="add-button small" onClick={() => { addCertificate(); setActivePanel({ type: 'certificate', index: certificates.length }); }}>
           + Add
         </button>
       </Accordion>

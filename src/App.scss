@@ -919,3 +919,57 @@
     text-align: left;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .preview-panel, .preview-panel * {
+    visibility: visible;
+  }
+  
+  .preview-panel {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+  
+  .page-shell, .resume-shell {
+    display: block;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background: transparent;
+  }
+  
+  .preview-scroll {
+    overflow: visible !important;
+    height: auto !important;
+    background: transparent;
+  }
+  
+  .preview-pages {
+    transform: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+  }
+
+  .preview-page {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    page-break-after: always;
+  }
+  
+  .panel:not(.preview-panel), .topbar {
+    display: none !important;
+  }
+}

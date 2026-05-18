@@ -21,9 +21,6 @@ export type EditorPageProps = {
   onAddJobApplication: () => string
   education: Education[]
   employmentHistory: EmploymentHistory[]
-  references: ApplicantReference[]
-  trainings: Training[]
-  certificates: Certificate[]
   uploadState: { uploading: boolean; message: string }
   previewFont: string
   resumeTemplate: 'classic' | 'compact' | 'modern'
@@ -63,9 +60,6 @@ const EditorPage = ({
   onAddJobApplication,
   education,
   employmentHistory,
-  references,
-  trainings,
-  certificates,
   uploadState,
   previewFont,
   resumeTemplate,
@@ -140,9 +134,9 @@ const EditorPage = ({
             }}
             education={education}
             employmentHistory={employmentHistory}
-            references={references}
-            trainings={trainings}
-            certificates={certificates}
+            references={jobApplication.references || []}
+            trainings={jobApplication.trainings || []}
+            certificates={jobApplication.certificates || []}
             uploadState={uploadState}
             previewFont={previewFont}
             onPreviewFontChange={onPreviewFontChange}
@@ -190,9 +184,9 @@ const EditorPage = ({
             jobApplication={jobApplication}
             education={education}
             employmentHistory={employmentHistory}
-            references={references}
-            trainings={trainings}
-            certificates={certificates}
+            references={jobApplication.references || []}
+            trainings={jobApplication.trainings || []}
+            certificates={jobApplication.certificates || []}
             previewFont={previewFont}
             resumeTemplate={resumeTemplate}
           />
@@ -214,9 +208,9 @@ const EditorPage = ({
               jobApplication={jobApplication}
               education={education}
               employmentHistory={employmentHistory}
-              references={references}
-              trainings={trainings}
-              certificates={certificates}
+              references={jobApplication.references || []}
+              trainings={jobApplication.trainings || []}
+              certificates={jobApplication.certificates || []}
               previewFont={previewFont}
               resumeTemplate={resumeTemplate}
             />

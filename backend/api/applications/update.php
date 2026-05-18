@@ -3,14 +3,25 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../index.php';
-require_once __DIR__ . '/../../database.php';
+require_once __DIR__ . '/../auth/require_auth.php';
 
-$db = getDatabaseConnection();
+$db = requireAuthUser(); // rename to get db connection
 $input = readJsonInput();
 $applicant = is_array($input['applicant'] ?? null) ? $input['applicant'] : [];
 $jobApplication = is_array($input['jobApplication'] ?? null) ? $input['jobApplication'] : [];
 
-$applicantId = (string)($applicant['applicantId'] ?? '');
+$applicantId = (string)$applicant['applicantId']; // Your original line
+
+// --- ADD THIS TEMPORARY DEBUGGING BLOCK ---
+if ($applicantId === '' || $applicantId === null) {
+    jsonResponse(400, [
+        'success' => false,
+        'message' => 'DEBUG: The applicantId is empty! Check your array keys.',
+        'user_array_contents' => $user // This will print everything inside $user
+    ]);
+    exit;
+}
+// ------------------------------------------
 $jobApplicationId = (string)($jobApplication['JobApplicationId'] ?? '');
 
 if ($jobApplicationId === '') {
@@ -57,9 +68,20 @@ try {
         'hasCriminalHistory' => (int)($applicant['hasCriminalHistory'] ?? 0),
     ]);
 
-    if ($statement->rowCount() === 0) {
-        throw new RuntimeException('Applicant not found for token.');
+    // --- ADD THIS CHECK ---
+    $checkUser = $db->prepare("SELECT applicantId FROM Applicant WHERE applicantId = :id");
+    $checkUser->execute(['id' => $applicantId]);
+    
+    if ($checkUser->rowCount() === 0) {
+        // If the database can't find this ID, stop everything and print it out!
+        jsonResponse(404, [
+            'success' => false,
+            'message' => "DEBUG FATAL: The token contains applicantId: '{$applicantId}', but this ID does NOT exist in the Applicant table in your database. Check if register.php actually inserted it!"
+        ]);
+        exit;
     }
+
+    // The $statement->rowCount() check has been successfully removed from here
 
     $statement = $db->prepare(
         'INSERT INTO JobApplication (JobApplicationId, applicantId, appliedPosition, JobApplicationDate, JobApplicationStatus, availableStartDate, expectedSalary, resumeFileUrl, agreesToDrugTest, agreedToTerms, dateAgreed, lastUpdated) '
@@ -99,8 +121,12 @@ try {
     if ($db->inTransaction()) {
         $db->rollBack();
     }
+    
+    // Detailed error reporting for the frontend
     jsonResponse(500, [
         'success' => false,
-        'message' => 'Application could not be updated.',
+        'message' => 'Database Error: ' . $error->getMessage(), // Exposes the exact SQL/PHP error
+        'file' => $error->getFile(),
+        'line' => $error->getLine()
     ]);
 }

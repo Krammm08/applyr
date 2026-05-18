@@ -43,6 +43,9 @@ const createEmptyApplication = (applicantId: string): JobApplication => ({
   availableStartDate: '',
   expectedSalary: '',
   resumeFileUrl: '',
+  references: [],
+  trainings: [],
+  certificates: [],
 })
 
 const createEducation = (applicantId: string): Education => ({
@@ -74,7 +77,7 @@ const createReference = (applicantId: string): ApplicantReference => ({
   referenceEmail: '',
 })
 
-const createTraining = (applicantId: string): Training => ({
+const createTraining = (): Training => ({
   trainingId: createId(),
   trainingTitle: '',
   trainingDescription: '',
@@ -82,7 +85,7 @@ const createTraining = (applicantId: string): Training => ({
   trainingDurationHours: '',
 })
 
-const createCertificate = (applicantId: string): Certificate => ({
+const createCertificate = (): Certificate => ({
   certificateId: createId(),
   certificateName: '',
   issuingAuthority: '',
@@ -137,8 +140,16 @@ function App() {
     storageKeys.jobApplications,
     [createEmptyApplication(initialApplicant.applicantId)],
   )
-  const initialJobApplications = rawJobApplications.map((application) => ({
+  const initialJobApplications = rawJobApplications.map((application, i) => ({
     ...application,
+    references: application.references ?? (i === 0 ? loadStoredValue<ApplicantReference[]>(storageKeys.references, [
+      {referenceId: createId(), applicantId: initialApplicant.applicantId, referenceName: 'John Doe', referenceTitle: 'Former Manager', referenceCompany: 'Acme Corp', referencePhone: '555-1234', referenceEmail: 'johndoe@acmecorp.com'},
+      {referenceId: createId(), applicantId: initialApplicant.applicantId, referenceName: 'Jane Smith', referenceTitle: 'Colleague', referenceCompany: 'Globex Inc', referencePhone: '555-5678', referenceEmail: 'janesmith@globexinc.com'},
+      {referenceId: createId(), applicantId: initialApplicant.applicantId, referenceName: 'Bob Johnson', referenceTitle: 'Professor', referenceCompany: 'State University', referencePhone: '555-9012', referenceEmail: 'bjohnson@stateuniversity.com'},
+      {referenceId: createId(), applicantId: initialApplicant.applicantId, referenceName: 'Alice Williams', referenceTitle: 'Mentor', referenceCompany: 'Tech Institute', referencePhone: '555-3456', referenceEmail: 'awilliams@techinstitute.com'},
+    ]) : []),
+    trainings: application.trainings ?? (i === 0 ? loadStoredValue<Training[]>(storageKeys.trainings, []) : []),
+    certificates: application.certificates ?? (i === 0 ? loadStoredValue<Certificate[]>(storageKeys.certificates, []) : []),
     lastUpdated:
       application.lastUpdated ||
       application.JobApplicationDate ||
@@ -174,22 +185,7 @@ function App() {
     {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Vehement Capital Partners', workAddress: '987 Cedar St, Somecity, USA', workPosition: 'Business Analyst', reasonForLeaving: 'Pursuing further education'},
     ]),
   )
-  const [references, setReferences] = useState<ApplicantReference[]>(
-    loadStoredValue<ApplicantReference[]>(storageKeys.references, [
-    {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'John Doe', referenceTitle: 'Former Manager', referenceCompany: 'Acme Corp', referencePhone: '555-1234', referenceEmail: 'johndoe@acmecorp.com'},
-    {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'Jane Smith', referenceTitle: 'Colleague', referenceCompany: 'Globex Inc', referencePhone: '555-5678', referenceEmail: 'janesmith@globexinc.com'},
-    {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'Bob Johnson', referenceTitle: 'Professor', referenceCompany: 'State University', referencePhone: '555-9012', referenceEmail: 'bjohnson@stateuniversity.com'},
-    {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'Alice Williams', referenceTitle: 'Mentor', referenceCompany: 'Tech Institute', referencePhone: '555-3456', referenceEmail: 'awilliams@techinstitute.com'},
-    ]),
-  )
 
-  const [trainings, setTrainings] = useState<Training[]>(
-    loadStoredValue<Training[]>(storageKeys.trainings, [])
-  )
-
-  const [certificates, setCertificates] = useState<Certificate[]>(
-    loadStoredValue<Certificate[]>(storageKeys.certificates, [])
-  )
 
   const [previewFont, setPreviewFont] = useState(
     loadStoredValue<string>(storageKeys.previewFont, 'Times New Roman'),
@@ -218,7 +214,6 @@ function App() {
   const linkApplicantId = (newApplicantId: string) => {
     setEducation((prev) => prev.map((item) => ({ ...item, applicantId: newApplicantId })))
     setEmploymentHistory((prev) => prev.map((item) => ({ ...item, applicantId: newApplicantId })))
-    setReferences((prev) => prev.map((item) => ({ ...item, applicantId: newApplicantId })))
     setJobApplications((prev) =>
       prev.map((item) => ({ ...item, applicantId: newApplicantId })),
     )
@@ -270,27 +265,6 @@ function App() {
     touchActiveApplication()
   }
 
-  const updateReference = (index: number, field: keyof ApplicantReference, value: string) => {
-    setReferences((prev) =>
-      prev.map((item, current) => (current === index ? { ...item, [field]: value } : item)),
-    )
-    touchActiveApplication()
-  }
-
-  const updateTraining = (index: number, field: keyof Training, value: string) => {
-    setTrainings((prev) =>
-      prev.map((item, current) => (current === index ? { ...item, [field]: value } : item)),
-    )
-    touchActiveApplication()
-  }
-
-  const updateCertificate = (index: number, field: keyof Certificate, value: string) => {
-    setCertificates((prev) =>
-      prev.map((item, current) => (current === index ? { ...item, [field]: value } : item)),
-    )
-    touchActiveApplication()
-  }
-
   const addEducation = () => {
     setEducation((prev) => [...prev, createEducation(applicant.applicantId)])
     touchActiveApplication()
@@ -298,21 +272,6 @@ function App() {
 
   const addEmployment = () => {
     setEmploymentHistory((prev) => [...prev, createEmployment(applicant.applicantId)])
-    touchActiveApplication()
-  }
-
-  const addReference = () => {
-    setReferences((prev) => [...prev, createReference(applicant.applicantId)])
-    touchActiveApplication()
-  }
-
-  const addTraining = () => {
-    setTrainings((prev) => [...prev, createTraining(applicant.applicantId)])
-    touchActiveApplication()
-  }
-
-  const addCertificate = () => {
-    setCertificates((prev) => [...prev, createCertificate(applicant.applicantId)])
     touchActiveApplication()
   }
 
@@ -328,21 +287,6 @@ function App() {
     touchActiveApplication()
   }
 
-  const removeReference = (index: number) => {
-    setReferences((prev) => (prev.filter((_, current) => current !== index)))
-    touchActiveApplication()
-  }
-
-  const removeTraining = (index: number) => {
-    setTrainings((prev) => (prev.filter((_, current) => current !== index)))
-    touchActiveApplication()
-  }
-
-  const removeCertificate = (index: number) => {
-    setCertificates((prev) => (prev.filter((_, current) => current !== index)))
-    touchActiveApplication()
-  }
-
   const reorderEducation = (fromIndex: number, toIndex: number) => {
     setEducation((prev) => moveItem(prev, fromIndex, toIndex))
     touchActiveApplication()
@@ -353,20 +297,40 @@ function App() {
     touchActiveApplication()
   }
 
-  const reorderReferences = (fromIndex: number, toIndex: number) => {
-    setReferences((prev) => moveItem(prev, fromIndex, toIndex))
-    touchActiveApplication()
+  const updateNestedArray = <K extends 'references' | 'trainings' | 'certificates'>(
+    key: K,
+    updater: (arr: NonNullable<JobApplication[K]>) => NonNullable<JobApplication[K]>
+  ) => {
+    setJobApplications(prev => prev.map(app => {
+      if (app.JobApplicationId === activeJobApplicationId) {
+        return {
+          ...app,
+          [key]: updater(app[key] || []),
+          lastUpdated: new Date().toISOString()
+        }
+      }
+      return app
+    }))
   }
 
-  const reorderTrainings = (fromIndex: number, toIndex: number) => {
-    setTrainings((prev) => moveItem(prev, fromIndex, toIndex))
-    touchActiveApplication()
-  }
+  const updateReference = (index: number, field: keyof ApplicantReference, value: string) => 
+    updateNestedArray('references', arr => arr.map((item, i) => i === index ? { ...item, [field]: value } : item))
+  const updateTraining = (index: number, field: keyof Training, value: string) => 
+    updateNestedArray('trainings', arr => arr.map((item, i) => i === index ? { ...item, [field]: value } : item))
+  const updateCertificate = (index: number, field: keyof Certificate, value: string) => 
+    updateNestedArray('certificates', arr => arr.map((item, i) => i === index ? { ...item, [field]: value } : item))
 
-  const reorderCertificates = (fromIndex: number, toIndex: number) => {
-    setCertificates((prev) => moveItem(prev, fromIndex, toIndex))
-    touchActiveApplication()
-  }
+  const addReference = () => updateNestedArray('references', arr => [...arr, createReference(applicant.applicantId)])
+  const addTraining = () => updateNestedArray('trainings', arr => [...arr, createTraining()])
+  const addCertificate = () => updateNestedArray('certificates', arr => [...arr, createCertificate()])
+
+  const removeReference = (index: number) => updateNestedArray('references', arr => arr.filter((_, i) => i !== index))
+  const removeTraining = (index: number) => updateNestedArray('trainings', arr => arr.filter((_, i) => i !== index))
+  const removeCertificate = (index: number) => updateNestedArray('certificates', arr => arr.filter((_, i) => i !== index))
+
+  const reorderReferences = (fromIndex: number, toIndex: number) => updateNestedArray('references', arr => moveItem(arr, fromIndex, toIndex))
+  const reorderTrainings = (fromIndex: number, toIndex: number) => updateNestedArray('trainings', arr => moveItem(arr, fromIndex, toIndex))
+  const reorderCertificates = (fromIndex: number, toIndex: number) => updateNestedArray('certificates', arr => moveItem(arr, fromIndex, toIndex))
 
   const activeJobApplication =
     jobApplications.find((application) => application.JobApplicationId === activeJobApplicationId) ??
@@ -379,7 +343,9 @@ function App() {
     setIsAuthLoading(true)
     try {
       const session = await loginUser(email, password)
+      console.log('Login successful, received session:', session)
       setAuthSession(session)
+      setApplicant((prev) => ({ ...prev, applicantId: session.user.id }))
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Login failed')
     } finally {
@@ -393,6 +359,8 @@ function App() {
     try {
       const session = await registerUser(name, email, password)
       setAuthSession(session)
+      setApplicant((prev) => ({ ...prev, applicantId: session.user.id }))
+
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Signup failed')
     } finally {
@@ -433,17 +401,7 @@ function App() {
     window.localStorage.setItem(storageKeys.employmentHistory, JSON.stringify(employmentHistory))
   }, [employmentHistory])
 
-  useEffect(() => {
-    window.localStorage.setItem(storageKeys.references, JSON.stringify(references))
-  }, [references])
 
-  useEffect(() => {
-    window.localStorage.setItem(storageKeys.trainings, JSON.stringify(trainings))
-  }, [trainings])
-
-  useEffect(() => {
-    window.localStorage.setItem(storageKeys.certificates, JSON.stringify(certificates))
-  }, [certificates])
 
   useEffect(() => {
     window.localStorage.setItem(storageKeys.previewFont, JSON.stringify(previewFont))
@@ -546,9 +504,6 @@ function App() {
             previewFont={previewFont}
             education={education}
             employmentHistory={employmentHistory}
-            references={references}
-            trainings={trainings}
-            certificates={certificates}
             authSession={authSession}
             isAuthLoading={isAuthLoading}
             authError={authError}
@@ -572,9 +527,6 @@ function App() {
               onAddJobApplication={addJobApplication}
               education={education}
               employmentHistory={employmentHistory}
-              references={references}
-              trainings={trainings}
-              certificates={certificates}
               uploadState={uploadState}
               previewFont={previewFont}
               resumeTemplate={resumeTemplate}

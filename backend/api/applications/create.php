@@ -3,14 +3,14 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../index.php';
-require_once __DIR__ . '/../../database.php';
+require_once __DIR__ . '/../auth/require_auth.php';
 
-$db = getDatabaseConnection();
+[$db, $user] = requireAuthUser();
 $input = readJsonInput();
 $applicant = is_array($input['applicant'] ?? null) ? $input['applicant'] : [];
 $jobApplication = is_array($input['jobApplication'] ?? null) ? $input['jobApplication'] : [];
 
-$applicantId = (string)($applicant['applicantId'] ?? '');
+$applicantId = (string)$user['applicantId'];
 $jobApplicationId = (string)($jobApplication['JobApplicationId'] ?? bin2hex(random_bytes(8)));
 
 $defaults = [
@@ -56,10 +56,6 @@ try {
         'citizenshipStatus' => (string)($applicant['citizenshipStatus'] ?? ''),
         'hasCriminalHistory' => (int)($applicant['hasCriminalHistory'] ?? 0),
     ]);
-
-    if ($statement->rowCount() === 0) {
-        throw new RuntimeException('Applicant not found for token.');
-    }
 
     $statement = $db->prepare(
         'INSERT INTO JobApplication (JobApplicationId, applicantId, appliedPosition, JobApplicationDate, JobApplicationStatus, availableStartDate, expectedSalary, resumeFileUrl, agreesToDrugTest, agreedToTerms, dateAgreed, lastUpdated) '
