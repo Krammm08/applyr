@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import './App.scss'
-import ResumeAccordion from './components/ResumeAccordion'
-import ResumePreview from './components/ResumePreview'
+import EditorPage from './pages/EditorPage'
+import HomePage from './pages/HomePage'
+import { updateApplication as syncApplication } from './services/applications'
+import { loginUser, registerUser, type AuthSession } from './services/auth'
 import type {
   Applicant,
   ApplicantReference,
@@ -34,6 +37,7 @@ const createEmptyApplication = (applicantId: string): JobApplication => ({
   applicantId,
   appliedPosition: '',
   JobApplicationDate: new Date().toISOString().slice(0, 10),
+  lastUpdated: new Date().toISOString(),
   availableStartDate: '',
   expectedSalary: '',
   resumeFileUrl: '',
@@ -77,43 +81,110 @@ const moveItem = <T,>(items: T[], fromIndex: number, toIndex: number) => {
 
 const starterApplicant = createEmptyApplicant()
 
+type ResumeTemplateId = 'classic' | 'compact' | 'modern'
+
+const storageKeys = {
+  applicant: 'applyr:applicant',
+  jobApplications: 'applyr:job-applications',
+  activeJobApplicationId: 'applyr:active-job-application',
+  education: 'applyr:education',
+  employmentHistory: 'applyr:employment-history',
+  references: 'applyr:references',
+  previewFont: 'applyr:preview-font',
+  resumeTemplate: 'applyr:resume-template',
+  authSession: 'applyr:auth-session',
+}
+
+const loadStoredValue = <T,>(key: string, fallback: T): T => {
+  if (typeof window === 'undefined') {
+    return fallback
+  }
+
+  const raw = window.localStorage.getItem(key)
+  if (!raw) {
+    return fallback
+  }
+
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
 function App() {
-  const [applicant, setApplicant] = useState<Applicant>(starterApplicant)
-  const [jobApplication, setJobApplication] = useState<JobApplication>(
-    createEmptyApplication(starterApplicant.applicantId),
+  const initialApplicant = loadStoredValue<Applicant>(storageKeys.applicant, starterApplicant)
+  const rawJobApplications = loadStoredValue<JobApplication[]>(
+    storageKeys.jobApplications,
+    [createEmptyApplication(initialApplicant.applicantId)],
   )
-  const [education, setEducation] = useState<Education[]>([
+  const initialJobApplications = rawJobApplications.map((application) => ({
+    ...application,
+    lastUpdated:
+      application.lastUpdated ||
+      application.JobApplicationDate ||
+      new Date().toISOString(),
+  }))
+
+  const [applicant, setApplicant] = useState<Applicant>(initialApplicant)
+  const [jobApplications, setJobApplications] =
+    useState<JobApplication[]>(initialJobApplications)
+  const [activeJobApplicationId, setActiveJobApplicationId] = useState(
+    loadStoredValue<string>(
+      storageKeys.activeJobApplicationId,
+      initialJobApplications[0].JobApplicationId,
+    ),
+  )
+  const [education, setEducation] = useState<Education[]>(
+    loadStoredValue<Education[]>(storageKeys.education, [
     {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'State University', schoolLocation: 'Anytown, USA', yearsAttended: '2015-2019', degreeReceived: 'Bachelor of Science', programName: 'Computer Science'},
     {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'Tech Institute', schoolLocation: 'Othertown, USA', yearsAttended: '2019-2021', degreeReceived: 'Master of Science', programName: 'Software Engineering'},
     {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'Community College', schoolLocation: 'Sometown, USA', yearsAttended: '2013-2015', degreeReceived: 'Associate Degree', programName: 'Information Technology'},
     {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'Online University', schoolLocation: 'Online', yearsAttended: '2020-2022', degreeReceived: 'Certificate', programName: 'Data Science'},
     {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'Business School', schoolLocation: 'Anycity, USA', yearsAttended: '2018-2020', degreeReceived: 'MBA', programName: 'Business Administration'},
     {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'Design Academy', schoolLocation: 'Othercity, USA', yearsAttended: '2012-2014', degreeReceived: 'Diploma', programName: 'Graphic Design'},
-  ])
-  const [employmentHistory, setEmploymentHistory] = useState<EmploymentHistory[]>([
+    ]),
+  )
+  const [employmentHistory, setEmploymentHistory] = useState<EmploymentHistory[]>(
+    loadStoredValue<EmploymentHistory[]>(storageKeys.employmentHistory, [
     {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Acme Corp', workAddress: '123 Main St, Anytown, USA', workPosition: 'Software Engineer', reasonForLeaving: 'Seeking new challenges'},
     {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Globex Inc', workAddress: '456 Elm St, Othertown, USA', workPosition: 'Junior Developer', reasonForLeaving: 'Career growth opportunities'},
     {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Initech', workAddress: '789 Oak St, Sometown, USA', workPosition: 'Intern', reasonForLeaving: 'Internship ended'},
     {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Umbrella Corp', workAddress: '321 Pine St, Anycity, USA', workPosition: 'QA Tester', reasonForLeaving: 'Company downsizing'},
     {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Hooli', workAddress: '654 Maple St, Othercity, USA', workPosition: 'Product Manager', reasonForLeaving: 'Relocation'},
     {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Vehement Capital Partners', workAddress: '987 Cedar St, Somecity, USA', workPosition: 'Business Analyst', reasonForLeaving: 'Pursuing further education'},
-  ])
-  const [references, setReferences] = useState<ApplicantReference[]>([
+    ]),
+  )
+  const [references, setReferences] = useState<ApplicantReference[]>(
+    loadStoredValue<ApplicantReference[]>(storageKeys.references, [
     {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'John Doe', referenceTitle: 'Former Manager', referenceCompany: 'Acme Corp', referencePhone: '555-1234', referenceEmail: 'johndoe@acmecorp.com'},
     {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'Jane Smith', referenceTitle: 'Colleague', referenceCompany: 'Globex Inc', referencePhone: '555-5678', referenceEmail: 'janesmith@globexinc.com'},
     {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'Bob Johnson', referenceTitle: 'Professor', referenceCompany: 'State University', referencePhone: '555-9012', referenceEmail: 'bjohnson@stateuniversity.com'},
     {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'Alice Williams', referenceTitle: 'Mentor', referenceCompany: 'Tech Institute', referencePhone: '555-3456', referenceEmail: 'awilliams@techinstitute.com'},
-  ])
+    ]),
+  )
 
-  const [previewFont, setPreviewFont] = useState('Times New Roman')
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const [previewFont, setPreviewFont] = useState(
+    loadStoredValue<string>(storageKeys.previewFont, 'Times New Roman'),
+  )
+  const [resumeTemplate, setResumeTemplate] = useState<ResumeTemplateId>(
+    loadStoredValue<ResumeTemplateId>(storageKeys.resumeTemplate, 'classic'),
+  )
 
   const [uploadState, setUploadState] = useState({ uploading: false, message: '' })
+  const [authSession, setAuthSession] = useState<AuthSession | null>(
+    loadStoredValue<AuthSession | null>(storageKeys.authSession, null),
+  )
+  const [authError, setAuthError] = useState('')
+  const [isAuthLoading, setIsAuthLoading] = useState(false)
 
   const linkApplicantId = (newApplicantId: string) => {
     setEducation((prev) => prev.map((item) => ({ ...item, applicantId: newApplicantId })))
     setEmploymentHistory((prev) => prev.map((item) => ({ ...item, applicantId: newApplicantId })))
     setReferences((prev) => prev.map((item) => ({ ...item, applicantId: newApplicantId })))
+    setJobApplications((prev) =>
+      prev.map((item) => ({ ...item, applicantId: newApplicantId })),
+    )
   }
 
   const updateApplicant = <K extends keyof Applicant>(key: K, value: Applicant[K]) => {
@@ -130,7 +201,20 @@ function App() {
     key: K,
     value: JobApplication[K],
   ) => {
-    setJobApplication((prev) => ({ ...prev, [key]: value }))
+    setJobApplications((prev) =>
+      prev.map((application) =>
+        application.JobApplicationId === activeJobApplicationId
+          ? { ...application, [key]: value, lastUpdated: new Date().toISOString() }
+          : application,
+      ),
+    )
+  }
+
+  const addJobApplication = () => {
+    const next = createEmptyApplication(applicant.applicantId)
+    setJobApplications((prev) => [...prev, next])
+    setActiveJobApplicationId(next.JobApplicationId)
+    return next.JobApplicationId
   }
 
   const updateEducation = (index: number, field: keyof Education, value: string) => {
@@ -189,6 +273,107 @@ function App() {
     setReferences((prev) => moveItem(prev, fromIndex, toIndex))
   }
 
+  const activeJobApplication =
+    jobApplications.find((application) => application.JobApplicationId === activeJobApplicationId) ??
+    jobApplications[0]
+
+  const authenticated = Boolean(authSession?.token)
+
+  const handleLogin = async (email: string, password: string) => {
+    setAuthError('')
+    setIsAuthLoading(true)
+    try {
+      const session = await loginUser(email, password)
+      setAuthSession(session)
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Login failed')
+    } finally {
+      setIsAuthLoading(false)
+    }
+  }
+
+  const handleSignup = async (name: string, email: string, password: string) => {
+    setAuthError('')
+    setIsAuthLoading(true)
+    try {
+      const session = await registerUser(name, email, password)
+      setAuthSession(session)
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'Signup failed')
+    } finally {
+      setIsAuthLoading(false)
+    }
+  }
+
+  const handleLogout = () => {
+    setAuthSession(null)
+  }
+
+  useEffect(() => {
+    if (!jobApplications.some((application) => application.JobApplicationId === activeJobApplicationId)) {
+      setActiveJobApplicationId(jobApplications[0]?.JobApplicationId ?? '')
+    }
+  }, [jobApplications, activeJobApplicationId])
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.applicant, JSON.stringify(applicant))
+  }, [applicant])
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.jobApplications, JSON.stringify(jobApplications))
+  }, [jobApplications])
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      storageKeys.activeJobApplicationId,
+      JSON.stringify(activeJobApplicationId),
+    )
+  }, [activeJobApplicationId])
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.education, JSON.stringify(education))
+  }, [education])
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.employmentHistory, JSON.stringify(employmentHistory))
+  }, [employmentHistory])
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.references, JSON.stringify(references))
+  }, [references])
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.previewFont, JSON.stringify(previewFont))
+  }, [previewFont])
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.resumeTemplate, JSON.stringify(resumeTemplate))
+  }, [resumeTemplate])
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKeys.authSession, JSON.stringify(authSession))
+  }, [authSession])
+
+  useEffect(() => {
+    if (!authSession?.token || !activeJobApplication) {
+      return
+    }
+
+    const payload = {
+      applicant,
+      jobApplication: {
+        ...activeJobApplication,
+        agreesToDrugTest: applicant.agreesToDrugTest ?? false,
+        JobApplicationStatus: 'Pending',
+      },
+    }
+
+    const timeout = window.setTimeout(() => {
+      void syncApplication(payload, authSession.token)
+    }, 400)
+
+    return () => window.clearTimeout(timeout)
+  }, [authSession?.token, applicant, activeJobApplication])
 
   const handleResumeUpload = async (file: File | null) => {
     if (!file) {
@@ -246,85 +431,70 @@ function App() {
   }
 
   return (
-    <div className="page-shell">
-      <header className="topbar">
-        <div>
-          <h1>Applyr</h1>
-        </div>
-      </header>
-      <div className="resume-shell">
-        <section className="panel panel-scroll">
-          <ResumeAccordion
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <HomePage
             applicant={applicant}
-            jobApplication={jobApplication}
+            jobApplications={jobApplications}
+            activeJobApplicationId={activeJobApplicationId}
+            resumeTemplate={resumeTemplate}
+            previewFont={previewFont}
             education={education}
             employmentHistory={employmentHistory}
             references={references}
-            uploadState={uploadState}
-            previewFont={previewFont}
-            onPreviewFontChange={setPreviewFont}
-            updateApplicant={updateApplicant}
-            updateApplication={updateApplication}
-            updateEducation={updateEducation}
-            updateEmployment={updateEmployment}
-            updateReference={updateReference}
-            addEducation={addEducation}
-            removeEducation={removeEducation}
-            reorderEducation={reorderEducation}
-            addEmployment={addEmployment}
-            removeEmployment={removeEmployment}
-            reorderEmployment={reorderEmployment}
-            addReference={addReference}
-            removeReference={removeReference}
-            reorderReferences={reorderReferences}
-            handleResumeUpload={handleResumeUpload}
+            authSession={authSession}
+            isAuthLoading={isAuthLoading}
+            authError={authError}
+            onLogin={handleLogin}
+            onSignup={handleSignup}
+            onLogout={handleLogout}
+            onAddJobApplication={addJobApplication}
           />
-        </section>
-        <section
-          className="panel panel-scroll preview-panel"
-          role="button"
-          tabIndex={0}
-          onClick={() => setIsPreviewOpen(true)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault()
-              setIsPreviewOpen(true)
-            }
-          }}
-        >
-          <ResumePreview
-            applicant={applicant}
-            jobApplication={jobApplication}
-            education={education}
-            employmentHistory={employmentHistory}
-            references={references}
-            previewFont={previewFont}
-          />
-        </section>
-      </div>
-
-      {isPreviewOpen ? (
-        <div className="preview-modal" onClick={() => setIsPreviewOpen(false)}>
-          <div className="preview-modal-content" onClick={(event) => event.stopPropagation()}>
-            <button
-              type="button"
-              className="preview-modal-close"
-              onClick={() => setIsPreviewOpen(false)}
-            >
-              Close Preview
-            </button>
-            <ResumePreview
+        }
+      />
+      <Route
+        path="/editor/:applicationId?"
+        element={
+          authenticated ? (
+            <EditorPage
               applicant={applicant}
-              jobApplication={jobApplication}
+              jobApplication={activeJobApplication}
+              jobApplications={jobApplications}
+              activeJobApplicationId={activeJobApplicationId}
+              onJobApplicationChange={setActiveJobApplicationId}
+              onAddJobApplication={addJobApplication}
               education={education}
               employmentHistory={employmentHistory}
               references={references}
+              uploadState={uploadState}
               previewFont={previewFont}
+              resumeTemplate={resumeTemplate}
+              onPreviewFontChange={setPreviewFont}
+              onResumeTemplateChange={setResumeTemplate}
+              updateApplicant={updateApplicant}
+              updateApplication={updateApplication}
+              updateEducation={updateEducation}
+              updateEmployment={updateEmployment}
+              updateReference={updateReference}
+              addEducation={addEducation}
+              removeEducation={removeEducation}
+              reorderEducation={reorderEducation}
+              addEmployment={addEmployment}
+              removeEmployment={removeEmployment}
+              reorderEmployment={reorderEmployment}
+              addReference={addReference}
+              removeReference={removeReference}
+              reorderReferences={reorderReferences}
+              handleResumeUpload={handleResumeUpload}
             />
-          </div>
-        </div>
-      ) : null}
-    </div>
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
+    </Routes>
   )
 }
 

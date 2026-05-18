@@ -1,75 +1,113 @@
--- 1. Create the base Applicant table first
+-- 1. Create Independent Entities First
+
 CREATE TABLE Applicant (
-    applicantId INT(10) AUTO_INCREMENT PRIMARY KEY,
-    applicantName VARCHAR(100) NOT NULL,
-    homeAddress VARCHAR(255) NOT NULL,
-    phoneNumber VARCHAR(20) NOT NULL,
-    emailAddress VARCHAR(100) NOT NULL,
-    linkedInUrl VARCHAR(255),
-    citizenshipStatus VARCHAR(50) NOT NULL,
-    hasCriminalHistory BOOLEAN NOT NULL,
-    agreesToDrugTest BOOLEAN NOT NULL
+    applicantId INT(10) PRIMARY KEY NOT NULL,
+    applicantName VARCHAR(80) NOT NULL,
+    homeAddress VARCHAR(100) NOT NULL,
+    phoneNumber VARCHAR(11) NOT NULL,
+    emailAddress VARCHAR(255) UNIQUE NOT NULL,
+    linkedInUrl VARCHAR(80),
+    citizenshipStatus VARCHAR(20) NOT NULL CHECK (citizenshipStatus IN ('Citizen', 'Permanent Resident', 'Visa', 'Other')),
+    hasCriminalHistory BOOLEAN NOT NULL
 );
 
--- 2. Create the Job Application table (Linked to Applicant)
-CREATE TABLE JobApplication (
-    JobApplicationId INT(10) AUTO_INCREMENT PRIMARY KEY,
-    applicantId INT(10) NOT NULL,
-    appliedPosition VARCHAR(100) NOT NULL,
-    JobApplicationDate DATE NOT NULL,
-    JobApplicationStatus VARCHAR(50) NOT NULL DEFAULT 'Pending',
-    availableStartDate DATE,
-    expectedSalary DECIMAL(10,2),
-    resumeFileUrl VARCHAR(255),
-    FOREIGN KEY (applicantId) REFERENCES Applicant(applicantId) ON DELETE CASCADE
+CREATE TABLE Company (
+    companyId INT(10) PRIMARY KEY NOT NULL,
+    companyName VARCHAR(80) NOT NULL,
+    companyAddress VARCHAR(100) NOT NULL,
+    companyPhone VARCHAR(16) NOT NULL
 );
 
--- 3. Create the School table
 CREATE TABLE School (
-    schoolId INT(10) AUTO_INCREMENT PRIMARY KEY,
-    schoolName VARCHAR(100) NOT NULL,
+    schoolId INT(10) PRIMARY KEY NOT NULL,
+    schoolName VARCHAR(80) NOT NULL,
     schoolLocation VARCHAR(100) NOT NULL
 );
 
--- 4. Create the Education table (Linked to Applicant and School)
-CREATE TABLE Education (
-    educationId INT(10) AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE Certificate (
+    certificateId INT(10) PRIMARY KEY NOT NULL,
+    certificateName VARCHAR(80) NOT NULL,
+    issuingAuthority VARCHAR(80) NOT NULL,
+    validityMonths INT(2) NOT NULL
+);
+
+CREATE TABLE Training (
+    trainingId INT(10) PRIMARY KEY NOT NULL,
+    trainingTitle VARCHAR(80) NOT NULL,
+    trainingDescription VARCHAR(255) NOT NULL,
+    trainingInstructor VARCHAR(80) NOT NULL,
+    trainingDurationHours INT(3) NOT NULL
+);
+
+-- 2. Create Dependent Entities (Foreign Keys referencing Independent Entities)
+
+CREATE TABLE JobApplication (
+    JobApplicationId INT(10) PRIMARY KEY NOT NULL,
     applicantId INT(10) NOT NULL,
-    schoolId INT(10) NOT NULL,
-    yearsAttended VARCHAR(50) NOT NULL,
-    degreeReceived VARCHAR(100) NOT NULL,
-    programName VARCHAR(100),
-    FOREIGN KEY (applicantId) REFERENCES Applicant(applicantId) ON DELETE CASCADE,
-    FOREIGN KEY (schoolId) REFERENCES School(schoolId) ON DELETE CASCADE
+    appliedPosition VARCHAR(60) NOT NULL,
+    JobApplicationDate DATE NOT NULL,
+    JobApplicationStatus VARCHAR(20) NOT NULL CHECK (JobApplicationStatus IN ('Pending', 'Under Review', 'Interview', 'Offered', 'Rejected', 'Withdrawn')),
+    availableStartDate DATE NOT NULL,
+    expectedSalary DECIMAL(10,2) CHECK (expectedSalary >= 0.00),
+    resumeFileUrl VARCHAR(60),
+    agreesToDrugTest BOOLEAN NOT NULL,
+    agreedToTerms BOOLEAN NOT NULL,
+    dateAgreed DATE NOT NULL,
+    FOREIGN KEY (applicantId) REFERENCES Applicant(applicantId)
 );
 
--- 5. Create the Company table
-CREATE TABLE Company (
-    companyId INT(10) AUTO_INCREMENT PRIMARY KEY,
-    companyName VARCHAR(100) NOT NULL,
-    workAddress VARCHAR(255) NOT NULL
-);
-
--- 6. Create the Employment History table (Linked to Applicant and Company)
 CREATE TABLE EmploymentHistory (
-    EmploymentHistoryId VARCHAR(50) PRIMARY KEY,
+    EmploymentHistoryId INT(10) PRIMARY KEY NOT NULL,
     applicantId INT(10) NOT NULL,
     companyId INT(10) NOT NULL,
-    workPosition VARCHAR(100) NOT NULL,
-    reasonForLeaving VARCHAR(255) NOT NULL,
-    FOREIGN KEY (applicantId) REFERENCES Applicant(applicantId) ON DELETE CASCADE,
-    FOREIGN KEY (companyId) REFERENCES Company(companyId) ON DELETE CASCADE
+    workPosition VARCHAR(80) NOT NULL,
+    reasonForLeaving VARCHAR(80),
+    startDate DATE NOT NULL,
+    endDate DATE NOT NULL,
+    isEmployed BOOLEAN NOT NULL,
+    FOREIGN KEY (applicantId) REFERENCES Applicant(applicantId),
+    FOREIGN KEY (companyId) REFERENCES Company(companyId)
 );
 
--- 7. Create the References table (Linked to Applicant)
--- Note: Renamed from "References" to "ApplicantReference" because REFERENCES is a reserved SQL keyword.
-CREATE TABLE ApplicantReference (
-    referenceId VARCHAR(50) PRIMARY KEY,
+CREATE TABLE Education (
+    educationId INT(10) PRIMARY KEY NOT NULL,
     applicantId INT(10) NOT NULL,
-    referenceName VARCHAR(100) NOT NULL,
-    referenceTitle VARCHAR(100) NOT NULL,
-    referenceCompany VARCHAR(100) NOT NULL,
-    referencePhone VARCHAR(20) NOT NULL,
-    referenceEmail VARCHAR(100),
-    FOREIGN KEY (applicantId) REFERENCES Applicant(applicantId) ON DELETE CASCADE
+    schoolId INT(10) NOT NULL,
+    startYear YEAR NOT NULL,
+    endYear YEAR NOT NULL,
+    degreeReceived VARCHAR(30) NOT NULL,
+    programName VARCHAR(30) NOT NULL,
+    FOREIGN KEY (applicantId) REFERENCES Applicant(applicantId),
+    FOREIGN KEY (schoolId) REFERENCES School(schoolId)
+);
+
+CREATE TABLE ApplicantCertificate (
+    applicantId INT(10) NOT NULL,
+    certificateId INT(10) NOT NULL,
+    dateIssued DATE NOT NULL,
+    PRIMARY KEY (applicantId, certificateId),
+    FOREIGN KEY (applicantId) REFERENCES Applicant(applicantId),
+    FOREIGN KEY (certificateId) REFERENCES Certificate(certificateId)
+);
+
+CREATE TABLE ApplicantTraining (
+    applicantId INT(10) NOT NULL,
+    trainingId INT(10) NOT NULL,
+    completionDate DATE NOT NULL,
+    PRIMARY KEY (applicantId, trainingId),
+    FOREIGN KEY (applicantId) REFERENCES Applicant(applicantId),
+    FOREIGN KEY (trainingId) REFERENCES Training(trainingId)
+);
+
+-- 3. Create Multi-level Dependent Entities
+
+CREATE TABLE Reference (
+    referenceId INT(10) PRIMARY KEY NOT NULL,
+    JobApplicationId INT(10) NOT NULL,
+    referenceName VARCHAR(80) NOT NULL,
+    referenceTitle VARCHAR(80) NOT NULL,
+    referenceCompany VARCHAR(80) NOT NULL,
+    referencePhone VARCHAR(11) NOT NULL,
+    referenceEmail VARCHAR(255) UNIQUE NOT NULL,
+    FOREIGN KEY (JobApplicationId) REFERENCES JobApplication(JobApplicationId)
 );

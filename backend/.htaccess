@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Allow CORS preflight requests to be handled properly
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Route all requests to index.php, even if the file exists
+# This ensures index.php's router handles everything.
+RewriteCond %{REQUEST_URI} !index\.php$
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]

@@ -15,6 +15,7 @@ export type JobApplication = {
   applicantId: string
   appliedPosition: string
   JobApplicationDate: string
+  lastUpdated: string
   availableStartDate: string
   expectedSalary: string
   resumeFileUrl: string

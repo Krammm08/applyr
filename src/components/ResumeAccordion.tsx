@@ -26,12 +26,18 @@ type ActivePanel =
 type ResumeAccordionProps = {
   applicant: Applicant
   jobApplication: JobApplication
+  jobApplications: JobApplication[]
+  activeJobApplicationId: string
+  onJobApplicationChange: (jobApplicationId: string) => void
+  onAddJobApplication: () => string
   education: Education[]
   employmentHistory: EmploymentHistory[]
   references: ApplicantReference[]
   uploadState: UploadState
   previewFont: string
   onPreviewFontChange: (fontFamily: string) => void
+  resumeTemplate: 'classic' | 'compact' | 'modern'
+  onResumeTemplateChange: (template: 'classic' | 'compact' | 'modern') => void
   updateApplicant: <K extends keyof Applicant>(key: K, value: Applicant[K]) => void
   updateApplication: <K extends keyof JobApplication>(key: K, value: JobApplication[K]) => void
   updateEducation: (index: number, field: keyof Education, value: string) => void
@@ -66,12 +72,18 @@ function useStickyState<T>(defaultValue: T[], key: string): [T[], Dispatch<SetSt
 const ResumeAccordion = ({
   applicant,
   jobApplication,
+  jobApplications,
+  activeJobApplicationId,
+  onJobApplicationChange,
+  onAddJobApplication,
   education,
   employmentHistory,
   references,
   uploadState,
   previewFont,
   onPreviewFontChange,
+  resumeTemplate,
+  onResumeTemplateChange,
   updateApplicant,
   updateApplication,
   updateEducation,
@@ -144,6 +156,24 @@ const ResumeAccordion = ({
         <Accordion title="Resume Template" subtitle="Choose your resume template" onToggle={() => toggleSection('template')} isOpen={openSections.includes('template')}>
           <div className="form-grid">
             <label>
+              Job Application
+              <div className="inline-input">
+                <select
+                  value={activeJobApplicationId}
+                  onChange={(event) => onJobApplicationChange(event.target.value)}
+                >
+                  {jobApplications.map((application, index) => (
+                    <option key={application.JobApplicationId} value={application.JobApplicationId}>
+                      {application.appliedPosition || `Application ${index + 1}`}
+                    </option>
+                  ))}
+                </select>
+                <button type="button" className="add-button" onClick={onAddJobApplication}>
+                  + Add
+                </button>
+              </div>
+            </label>
+            <label>
               Resume Font
               <select value={previewFont} onChange={(event) => onPreviewFontChange(event.target.value)}>
                 <option value="Times New Roman">Times New Roman</option>
@@ -151,6 +181,19 @@ const ResumeAccordion = ({
                 <option value="Garamond">Garamond</option>
                 <option value="Arial">Arial</option>
                 <option value="Calibri">Calibri</option>
+              </select>
+            </label>
+            <label>
+              Template Style
+              <select
+                value={resumeTemplate}
+                onChange={(event) =>
+                  onResumeTemplateChange(event.target.value as 'classic' | 'compact' | 'modern')
+                }
+              >
+                <option value="classic">Classic</option>
+                <option value="compact">Compact</option>
+                <option value="modern">Modern</option>
               </select>
             </label>
           </div>

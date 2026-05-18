@@ -15,6 +15,7 @@ type ResumePreviewProps = {
 	employmentHistory: EmploymentHistory[];
 	references: ApplicantReference[];
 	previewFont: string;
+	resumeTemplate: ResumeTemplateId;
 };
 
 const getDisplayValue = (value: string, fallback = "Not provided") =>
@@ -43,18 +44,29 @@ type PageBlock = {
 	sections: SectionBlock[];
 };
 
-const MAX_LINES_PER_PAGE = 46;
-const HEADER_LINES = 6;
+type PageMetrics = {
+	maxLines: number;
+	headerLines: number;
+	sectionGapLines: number;
+};
 
-const chunkSectionsIntoPages = (sections: SectionBlock[]): PageBlock[] => {
+type ResumeTemplateId = "classic" | "compact" | "modern";
+
+const DEFAULT_MAX_LINES_PER_PAGE = 46;
+const DEFAULT_HEADER_LINES = 6;
+
+const chunkSectionsIntoPages = (
+	sections: SectionBlock[],
+	metrics: PageMetrics,
+): PageBlock[] => {
 	const pages: PageBlock[] = [];
 	let current: PageBlock = { showHeader: true, sections: [] };
-	let remaining = MAX_LINES_PER_PAGE - HEADER_LINES;
+	let remaining = metrics.maxLines - metrics.headerLines;
 
 	const pushPage = () => {
 		pages.push(current);
 		current = { showHeader: false, sections: [] };
-		remaining = MAX_LINES_PER_PAGE;
+		remaining = metrics.maxLines;
 	};
 
 	sections.forEach((section) => {
@@ -63,7 +75,7 @@ const chunkSectionsIntoPages = (sections: SectionBlock[]): PageBlock[] => {
 		let start = 0;
 
 		while (start < lines.length) {
-			if (remaining < 2) {
+			if (remaining < 2 + metrics.sectionGapLines) {
 				pushPage();
 			}
 
@@ -78,6 +90,7 @@ const chunkSectionsIntoPages = (sections: SectionBlock[]): PageBlock[] => {
 			});
 
 			remaining -= 1 + chunk.length;
+			remaining -= metrics.sectionGapLines;
 			start += chunk.length;
 
 			if (start < lines.length) {
@@ -97,14 +110,21 @@ const ResumePreview = ({
 	employmentHistory,
 	references,
 	previewFont,
+	resumeTemplate,
 }: ResumePreviewProps) => {
-	const resumeLink = jobApplication.resumeFileUrl;
 	const pageStyle = {
 		["--resume-font" as const]: previewFont,
 	} as CSSProperties;
 	const containerRef = useRef<HTMLDivElement>(null);
 	const pageRef = useRef<HTMLElement | null>(null);
+	const headerRef = useRef<HTMLDivElement | null>(null);
+	const previewRef = useRef<HTMLDivElement | null>(null);
 	const [scale, setScale] = useState(1);
+	const [pageMetrics, setPageMetrics] = useState<PageMetrics>({
+		maxLines: DEFAULT_MAX_LINES_PER_PAGE,
+		headerLines: DEFAULT_HEADER_LINES,
+		sectionGapLines: 0,
+	});
 
 	useEffect(() => {
 		const target = containerRef.current;
@@ -126,60 +146,145 @@ const ResumePreview = ({
 		return () => observer.disconnect();
 	}, []);
 
-	const sections: SectionBlock[] = [
-		{
-			title: "Application Details",
-			lines: [
-				[`Start date:`,`${getDisplayValue(jobApplication.availableStartDate)}`],
-				[`Expected salary:`, `${getDisplayValue(jobApplication.expectedSalary)}`],
-				[`Citizenship:`, `${getDisplayValue(applicant.citizenshipStatus)}`],
-				[`LinkedIn:`, `${getDisplayValue(applicant.linkedInUrl)}`],
-			],
-			isEmpty: false,
-		},
-		{
-			title: "Education",
-			lines: education,
-				// education.length === 0
-				// 	? []
-				// 	: education.map(
-				// 			(item) => {
+	useEffect(() => {
+		const pageElement = pageRef.current;
+		if (!pageElement || typeof window === "undefined") {
+			return;
+		}
 
-        //         return `${getDisplayValue(item.degreeReceived, "Degree")} - ${getDisplayValue(
-        //           item.schoolName,
-				// 					"School",
-				// 				)}, ${getDisplayValue(item.schoolLocation, "Location")} (${getDisplayValue(
-        //           item.yearsAttended,
-				// 					"Years",
-				// 				)})`,
-        //       }
-				// 		),
-			isEmpty: education.length === 0,
-		},
-		{
-			title: "Employment",
-			lines: employmentHistory,
-			isEmpty: employmentHistory.length === 0,
-		},
-		{
-			title: "References",
-			lines: references,
-			isEmpty: references.length === 0,
-		},
-		{
-			title: "Compliance",
-			lines: [
-				`Criminal history: ${getYesNo(applicant.hasCriminalHistory)}`,
-				`Drug test agreement: ${getYesNo(applicant.agreesToDrugTest)}`,
-			],
-			isEmpty: false,
-		},
-	];
+		const measure = () => {
+			const pageStyles = window.getComputedStyle(pageElement);
+			const paddingTop = Number.parseFloat(pageStyles.paddingTop) || 0;
+			const paddingBottom = Number.parseFloat(pageStyles.paddingBottom) || 0;
+			const fontSize = Number.parseFloat(pageStyles.fontSize) || 12;
+			const lineHeightValue = Number.parseFloat(pageStyles.lineHeight);
+			const lineHeight = Number.isFinite(lineHeightValue)
+				? lineHeightValue
+				: fontSize * 1.5;
+			const headerHeight = headerRef.current?.getBoundingClientRect().height ?? 0;
+			const pageHeight = pageElement.getBoundingClientRect().height;
+			const availableHeight = pageHeight - paddingTop - paddingBottom - headerHeight;
+			const maxLines = Math.max(1, Math.floor(availableHeight / lineHeight));
+			const headerLines = Math.max(1, Math.ceil(headerHeight / lineHeight));
+			let sectionGapLines = 0;
+			const previewElement = previewRef.current;
+			if (previewElement) {
+				const previewStyles = window.getComputedStyle(previewElement);
+				const gapValue = Number.parseFloat(previewStyles.rowGap || previewStyles.gap);
+				if (Number.isFinite(gapValue)) {
+					sectionGapLines = Math.max(0, Math.round(gapValue / lineHeight));
+				}
+			}
 
-	const pages = chunkSectionsIntoPages(sections);
+			setPageMetrics((prev) =>
+				prev.maxLines === maxLines &&
+				prev.headerLines === headerLines &&
+				prev.sectionGapLines === sectionGapLines
+					? prev
+					: { maxLines, headerLines, sectionGapLines },
+			);
+		};
+
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(pageElement);
+		if (headerRef.current) {
+			observer.observe(headerRef.current);
+		}
+		if (previewRef.current) {
+			observer.observe(previewRef.current);
+		}
+
+		return () => observer.disconnect();
+	}, [previewFont, resumeTemplate]);
+
+	const sectionMap = new Map<string, SectionBlock>([
+		[
+			"Application Details",
+			{
+				title: "Application Details",
+				lines: [
+					["Start date:", `${getDisplayValue(jobApplication.availableStartDate)}`],
+					["Expected salary:", `${getDisplayValue(jobApplication.expectedSalary)}`],
+					["Citizenship:", `${getDisplayValue(applicant.citizenshipStatus)}`],
+					["LinkedIn:", `${getDisplayValue(applicant.linkedInUrl)}`],
+				],
+				isEmpty: false,
+			},
+		],
+		[
+			"Education",
+			{
+				title: "Education",
+				lines: education,
+				isEmpty: education.length === 0,
+			},
+		],
+		[
+			"Employment",
+			{
+				title: "Employment",
+				lines: employmentHistory,
+				isEmpty: employmentHistory.length === 0,
+			},
+		],
+		[
+			"References",
+			{
+				title: "References",
+				lines: references,
+				isEmpty: references.length === 0,
+			},
+		],
+		[
+			"Compliance",
+			{
+				title: "Compliance",
+				lines: [
+					["Criminal history:", getYesNo(applicant.hasCriminalHistory)],
+					["Drug test agreement:", getYesNo(applicant.agreesToDrugTest)],
+				],
+				isEmpty: false,
+			},
+		],
+	]);
+
+	const templateOrder: Record<ResumeTemplateId, string[]> = {
+		classic: [
+			"Application Details",
+			"Education",
+			"Employment",
+			"References",
+			"Compliance",
+		],
+		compact: [
+			"Application Details",
+			"Employment",
+			"Education",
+			"Compliance",
+			"References",
+		],
+		modern: [
+			"Application Details",
+			"Compliance",
+			"Employment",
+			"Education",
+			"References",
+		],
+	};
+
+	const sections: SectionBlock[] = templateOrder[resumeTemplate]
+		.map((title) => sectionMap.get(title))
+		.filter((section): section is SectionBlock => Boolean(section));
+
+	const pages = chunkSectionsIntoPages(sections, pageMetrics);
 
 function isTupleArray(arr: unknown[]): arr is [string, string][] {
 	return Array.isArray(arr[0]);
+}
+
+function isStringArray(arr: unknown[]): arr is string[] {
+	return typeof arr[0] === "string";
 }
 
 function isEducationArray(arr: unknown[]): arr is Education[] {
@@ -230,17 +335,22 @@ function isReferenceArray(arr: unknown[]): arr is ApplicantReference[] {
 			aria-label="Resume preview document"
 			ref={containerRef}
 		>
-			<div className="preview-pages" style={{ transform: `scale(${scale})` }}>
+			<div
+				className="preview-pages"
+				style={{ transform: `scale(${scale})`, ...pageStyle }}
+			>
 				{pages.map((page, pageIndex) => (
 					<article
-						className="preview-page"
-						style={pageStyle}
+						className={`preview-page preview-template--${resumeTemplate}`}
 						key={`page-${pageIndex}`}
 						ref={pageIndex === 0 ? pageRef : undefined}
 					>
-						<div className="preview">
+						<div className="preview" ref={pageIndex === 0 ? previewRef : undefined}>
 							{page.showHeader ? (
-								<div className="preview-header">
+								<div
+									className="preview-header"
+									ref={pageIndex === 0 ? headerRef : undefined}
+								>
 									<div>
 										<h2 className="preview-name">
 											{getDisplayValue(applicant.applicantName, "Your Name")}
@@ -271,7 +381,7 @@ function isReferenceArray(arr: unknown[]): arr is ApplicantReference[] {
 							{page.sections
 								.filter((section) => !section.isEmpty)
 								.map((section, sectionIndex) => {
-									if (section.title.startsWith("Application Details") && isTupleArray(section.lines)) {
+									if (isTupleArray(section.lines)) {
 										return (
 											<section
 												className="preview-section"
@@ -368,7 +478,10 @@ function isReferenceArray(arr: unknown[]): arr is ApplicantReference[] {
 												)}
 											</section>
                     );
-										} else if (section.title.startsWith("References") && isReferenceArray(section.lines)) {
+										} else if (
+											section.title.startsWith("References") &&
+											isReferenceArray(section.lines)
+										) {
 											return (
 												<section
 													className="preview-section"
@@ -409,33 +522,35 @@ function isReferenceArray(arr: unknown[]): arr is ApplicantReference[] {
 													)}
 												</section>
 											);
-									} else {
-										return (
-											<section
-												className="preview-section"
-												key={`section-${pageIndex}-${sectionIndex}`}
-											>
-												<div className="preview-section-header">
-													<h3>{section.title}</h3>
-													<span className="preview-section-rule" />
-												</div>
-												{section.isEmpty ? (
-													<p className="preview-empty">No entries yet.</p>
-												) : (
-													<div className="preview-list">
-														{section.lines.map((line, lineIndex) => (
-															<p
-																key={`line-${pageIndex}-${sectionIndex}-${lineIndex}`}
-															>
-																{line}
-															</p>
-														))}
+										} else if (isStringArray(section.lines)) {
+											return (
+												<section
+													className="preview-section"
+													key={`section-${pageIndex}-${sectionIndex}`}
+												>
+													<div className="preview-section-header">
+														<h3>{section.title}</h3>
+														<span className="preview-section-rule" />
+													</div>
+													{section.isEmpty ? (
+														<p className="preview-empty">No entries yet.</p>
+													) : (
+														<div className="preview-list">
+															{section.lines.map((line, lineIndex) => (
+																<p
+																	key={`line-${pageIndex}-${sectionIndex}-${lineIndex}`}
+																>
+																	{line}
+																</p>
+															))}
 													</div>
 												)}
 											</section>
-                    );
-									}
-								})}{" "}
+											);
+										}
+
+										return null;
+									})}
 						</div>
 					</article>
 				))}
