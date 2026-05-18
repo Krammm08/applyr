@@ -83,10 +83,26 @@ function App() {
     createEmptyApplication(starterApplicant.applicantId),
   )
   const [education, setEducation] = useState<Education[]>([
+    {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'State University', schoolLocation: 'Anytown, USA', yearsAttended: '2015-2019', degreeReceived: 'Bachelor of Science', programName: 'Computer Science'},
+    {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'Tech Institute', schoolLocation: 'Othertown, USA', yearsAttended: '2019-2021', degreeReceived: 'Master of Science', programName: 'Software Engineering'},
+    {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'Community College', schoolLocation: 'Sometown, USA', yearsAttended: '2013-2015', degreeReceived: 'Associate Degree', programName: 'Information Technology'},
+    {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'Online University', schoolLocation: 'Online', yearsAttended: '2020-2022', degreeReceived: 'Certificate', programName: 'Data Science'},
+    {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'Business School', schoolLocation: 'Anycity, USA', yearsAttended: '2018-2020', degreeReceived: 'MBA', programName: 'Business Administration'},
+    {educationId: createId(), applicantId: starterApplicant.applicantId, schoolName: 'Design Academy', schoolLocation: 'Othercity, USA', yearsAttended: '2012-2014', degreeReceived: 'Diploma', programName: 'Graphic Design'},
   ])
   const [employmentHistory, setEmploymentHistory] = useState<EmploymentHistory[]>([
+    {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Acme Corp', workAddress: '123 Main St, Anytown, USA', workPosition: 'Software Engineer', reasonForLeaving: 'Seeking new challenges'},
+    {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Globex Inc', workAddress: '456 Elm St, Othertown, USA', workPosition: 'Junior Developer', reasonForLeaving: 'Career growth opportunities'},
+    {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Initech', workAddress: '789 Oak St, Sometown, USA', workPosition: 'Intern', reasonForLeaving: 'Internship ended'},
+    {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Umbrella Corp', workAddress: '321 Pine St, Anycity, USA', workPosition: 'QA Tester', reasonForLeaving: 'Company downsizing'},
+    {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Hooli', workAddress: '654 Maple St, Othercity, USA', workPosition: 'Product Manager', reasonForLeaving: 'Relocation'},
+    {EmploymentHistoryId: createId(), applicantId: starterApplicant.applicantId, companyName: 'Vehement Capital Partners', workAddress: '987 Cedar St, Somecity, USA', workPosition: 'Business Analyst', reasonForLeaving: 'Pursuing further education'},
   ])
   const [references, setReferences] = useState<ApplicantReference[]>([
+    {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'John Doe', referenceTitle: 'Former Manager', referenceCompany: 'Acme Corp', referencePhone: '555-1234', referenceEmail: 'johndoe@acmecorp.com'},
+    {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'Jane Smith', referenceTitle: 'Colleague', referenceCompany: 'Globex Inc', referencePhone: '555-5678', referenceEmail: 'janesmith@globexinc.com'},
+    {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'Bob Johnson', referenceTitle: 'Professor', referenceCompany: 'State University', referencePhone: '555-9012', referenceEmail: 'bjohnson@stateuniversity.com'},
+    {referenceId: createId(), applicantId: starterApplicant.applicantId, referenceName: 'Alice Williams', referenceTitle: 'Mentor', referenceCompany: 'Tech Institute', referencePhone: '555-3456', referenceEmail: 'awilliams@techinstitute.com'},
   ])
 
   const [previewFont, setPreviewFont] = useState('Times New Roman')
