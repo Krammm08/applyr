@@ -17,7 +17,7 @@ if ($applicantId === '' || $applicantId === null) {
     jsonResponse(400, [
         'success' => false,
         'message' => 'DEBUG: The applicantId is empty! Check your array keys.',
-        'user_array_contents' => $user // This will print everything inside $user
+        'debug_input' => $input 
     ]);
     exit;
 }

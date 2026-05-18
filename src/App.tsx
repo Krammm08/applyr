@@ -135,12 +135,18 @@ const loadStoredValue = <T,>(key: string, fallback: T): T => {
 }
 
 function App() {
-  const initialApplicant = loadStoredValue<Applicant>(storageKeys.applicant, starterApplicant)
-  const rawJobApplications = loadStoredValue<JobApplication[]>(
+  const rawApplicant = loadStoredValue<any>(storageKeys.applicant, starterApplicant)
+  const initialApplicant: Applicant = {
+    ...starterApplicant,
+    ...rawApplicant,
+    applicantId: rawApplicant.applicantId || (rawApplicant as any).id || starterApplicant.applicantId,
+  }
+
+  const rawJobApplications = loadStoredValue<any[]>(
     storageKeys.jobApplications,
     [createEmptyApplication(initialApplicant.applicantId)],
   )
-  const initialJobApplications = rawJobApplications.map((application, i) => ({
+  const initialJobApplications = rawJobApplications.map((application, i) => { const defaultApp = createEmptyApplication(initialApplicant.applicantId); return { ...defaultApp, ...application, JobApplicationId: application.JobApplicationId || (application as any).id || defaultApp.JobApplicationId, applicantId: initialApplicant.applicantId, 
     ...application,
     references: application.references ?? (i === 0 ? loadStoredValue<ApplicantReference[]>(storageKeys.references, [
       {referenceId: createId(), applicantId: initialApplicant.applicantId, referenceName: 'John Doe', referenceTitle: 'Former Manager', referenceCompany: 'Acme Corp', referencePhone: '555-1234', referenceEmail: 'johndoe@acmecorp.com'},
@@ -154,7 +160,7 @@ function App() {
       application.lastUpdated ||
       application.JobApplicationDate ||
       new Date().toISOString(),
-  }))
+  }})
 
   const [applicant, setApplicant] = useState<Applicant>(initialApplicant)
   const [jobApplications, setJobApplications] =
