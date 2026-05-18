@@ -1,4 +1,4 @@
-import type { Applicant, JobApplication } from '../types'
+import type { Applicant, JobApplication, Education, EmploymentHistory, Training, Certificate } from '../types'
 
 const API_BASE_URL = 'http://localhost:8000'
   // import.meta.env.VITE_API_BASE_URL ?? 'https://eliazar.heliohost.us/backend'
@@ -32,6 +32,10 @@ type ApplicationPayload = {
     agreesToDrugTest?: boolean
     JobApplicationStatus?: string
   }
+  education?: Education[]
+  employmentHistory?: EmploymentHistory[]
+  trainings?: Training[]
+  certificates?: Certificate[]
 }
 
 export const createApplication = async (payload: ApplicationPayload) =>

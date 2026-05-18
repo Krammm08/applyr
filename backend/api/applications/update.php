@@ -109,6 +109,101 @@ try {
         'agreesToDrugTest' => (int)($jobApplication['agreesToDrugTest'] ?? 0),
     ]);
 
+    // Insert/update education
+    if (isset($input['education']) && is_array($input['education'])) {
+        $stmtSchool = $db->prepare('INSERT INTO School (schoolId, schoolName, schoolLocation) VALUES (:schoolId, :schoolName, :schoolLocation) ON DUPLICATE KEY UPDATE schoolName=VALUES(schoolName), schoolLocation=VALUES(schoolLocation)');
+        $stmtEd = $db->prepare('INSERT INTO Education (educationId, applicantId, schoolId, startYear, endYear, degreeReceived, programName) VALUES (:educationId, :applicantId, :schoolId, :startYear, :endYear, :degreeReceived, :programName) ON DUPLICATE KEY UPDATE schoolId=VALUES(schoolId), startYear=VALUES(startYear), endYear=VALUES(endYear), degreeReceived=VALUES(degreeReceived), programName=VALUES(programName)');
+        
+        foreach ($input['education'] as $ed) {
+            $schoolId = !empty($ed['schoolId']) ? $ed['schoolId'] : rand(100000, 999999);
+            $stmtSchool->execute([
+                'schoolId' => $schoolId,
+                'schoolName' => $ed['schoolName'] ?? '',
+                'schoolLocation' => $ed['schoolLocation'] ?? ''
+            ]);
+            $edId = !empty($ed['educationId']) ? $ed['educationId'] : rand(100000, 999999);
+            $stmtEd->execute([
+                'educationId' => $edId,
+                'applicantId' => $applicantId,
+                'schoolId' => $schoolId,
+                'startYear' => $ed['startYear'] ?? date('Y'),
+                'endYear' => $ed['endYear'] ?? date('Y'),
+                'degreeReceived' => $ed['degreeReceived'] ?? '',
+                'programName' => $ed['programName'] ?? ''
+            ]);
+        }
+    }
+
+    // Insert/update employment history
+    if (isset($input['employmentHistory']) && is_array($input['employmentHistory'])) {
+        $stmtCompany = $db->prepare('INSERT INTO Company (companyId, companyName, companyAddress, companyPhone) VALUES (:companyId, :companyName, :companyAddress, :companyPhone) ON DUPLICATE KEY UPDATE companyName=VALUES(companyName), companyAddress=VALUES(companyAddress), companyPhone=VALUES(companyPhone)');
+        $stmtEmp = $db->prepare('INSERT INTO EmploymentHistory (EmploymentHistoryId, applicantId, companyId, workPosition, reasonForLeaving, startDate, endDate, isEmployed) VALUES (:empId, :applicantId, :companyId, :workPosition, :reasonForLeaving, :startDate, :endDate, :isEmployed) ON DUPLICATE KEY UPDATE companyId=VALUES(companyId), workPosition=VALUES(workPosition), reasonForLeaving=VALUES(reasonForLeaving), startDate=VALUES(startDate), endDate=VALUES(endDate), isEmployed=VALUES(isEmployed)');
+        
+        foreach ($input['employmentHistory'] as $emp) {
+            $companyId = !empty($emp['companyId']) ? $emp['companyId'] : rand(100000, 999999);
+            $stmtCompany->execute([
+                'companyId' => $companyId,
+                'companyName' => $emp['companyName'] ?? '',
+                'companyAddress' => $emp['companyAddress'] ?? '',
+                'companyPhone' => $emp['companyPhone'] ?? ''
+            ]);
+            $empId = !empty($emp['EmploymentHistoryId']) ? $emp['EmploymentHistoryId'] : rand(100000, 999999);
+            $stmtEmp->execute([
+                'empId' => $empId,
+                'applicantId' => $applicantId,
+                'companyId' => $companyId,
+                'workPosition' => $emp['workPosition'] ?? '',
+                'reasonForLeaving' => $emp['reasonForLeaving'] ?? null,
+                'startDate' => (!empty($emp['startDate'])) ? $emp['startDate'] : date('Y-m-d'),
+                'endDate' => (!empty($emp['endDate'])) ? $emp['endDate'] : date('Y-m-d'),
+                'isEmployed' => (int)($emp['isEmployed'] ?? 0)
+            ]);
+        }
+    }
+
+    // Insert/update certificates
+    if (isset($input['certificates']) && is_array($input['certificates'])) {
+        $stmtCert = $db->prepare('INSERT INTO Certificate (certificateId, certificateName, issuingAuthority, validityMonths) VALUES (:certId, :certName, :authority, :validity) ON DUPLICATE KEY UPDATE certificateName=VALUES(certificateName), issuingAuthority=VALUES(issuingAuthority), validityMonths=VALUES(validityMonths)');
+        $stmtAppCert = $db->prepare('INSERT INTO ApplicantCertificate (applicantId, certificateId, dateIssued) VALUES (:applicantId, :certId, :dateIssued) ON DUPLICATE KEY UPDATE dateIssued=VALUES(dateIssued)');
+        
+        foreach ($input['certificates'] as $cert) {
+            $certId = !empty($cert['certificateId']) ? $cert['certificateId'] : rand(100000, 999999);
+            $stmtCert->execute([
+                'certId' => $certId,
+                'certName' => $cert['certificateName'] ?? '',
+                'authority' => $cert['issuingAuthority'] ?? '',
+                'validity' => $cert['validityMonths'] ?? 0
+            ]);
+            $stmtAppCert->execute([
+                'applicantId' => $applicantId,
+                'certId' => $certId,
+                'dateIssued' => (!empty($cert['dateIssued'])) ? $cert['dateIssued'] : date('Y-m-d')
+            ]);
+        }
+    }
+
+    // Insert/update trainings
+    if (isset($input['trainings']) && is_array($input['trainings'])) {
+        $stmtTrain = $db->prepare('INSERT INTO Training (trainingId, trainingTitle, trainingDescription, trainingInstructor, trainingDurationHours) VALUES (:trainId, :title, :desc, :instructor, :duration) ON DUPLICATE KEY UPDATE trainingTitle=VALUES(trainingTitle), trainingDescription=VALUES(trainingDescription), trainingInstructor=VALUES(trainingInstructor), trainingDurationHours=VALUES(trainingDurationHours)');
+        $stmtAppTrain = $db->prepare('INSERT INTO ApplicantTraining (applicantId, trainingId, completionDate) VALUES (:applicantId, :trainId, :completionDate) ON DUPLICATE KEY UPDATE completionDate=VALUES(completionDate)');
+        
+        foreach ($input['trainings'] as $train) {
+            $trainId = !empty($train['trainingId']) ? $train['trainingId'] : rand(100000, 999999);
+            $stmtTrain->execute([
+                'trainId' => $trainId,
+                'title' => $train['trainingTitle'] ?? '',
+                'desc' => $train['trainingDescription'] ?? '',
+                'instructor' => $train['trainingInstructor'] ?? '',
+                'duration' => $train['trainingDurationHours'] ?? 0
+            ]);
+            $stmtAppTrain->execute([
+                'applicantId' => $applicantId,
+                'trainId' => $trainId,
+                'completionDate' => (!empty($train['completionDate'])) ? $train['completionDate'] : date('Y-m-d')
+            ]);
+        }
+    }
+
     $db->commit();
 
     jsonResponse(200, [

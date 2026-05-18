@@ -83,6 +83,8 @@ function useStickyState<T>(defaultValue: T[], key: string): [T[], Dispatch<SetSt
   return [value, setValue];
 }
 
+import { updateApplication as syncApplication } from '../services/applications'
+
 const ResumeAccordion = ({
   applicant,
   jobApplication,
@@ -130,6 +132,23 @@ const ResumeAccordion = ({
   const [dragReferenceIndex, setDragReferenceIndex] = useState<number | null>(null)
   const [dragTrainingIndex, setDragTrainingIndex] = useState<number | null>(null)
   const [dragCertificateIndex, setDragCertificateIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!applicant.applicantId) return;
+    const payload = {
+      applicant,
+      jobApplication: {
+        ...jobApplication,
+        agreesToDrugTest: applicant.agreesToDrugTest ?? false,
+        JobApplicationStatus: 'Pending',
+      },
+      education,
+      employmentHistory,
+      trainings,
+      certificates,
+    }
+    syncApplication(payload).catch(console.error)
+  }, [activePanel])
 
   const handleDragStart = (
     setter: (value: number | null) => void,

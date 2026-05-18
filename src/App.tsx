@@ -427,6 +427,10 @@ function App() {
         agreesToDrugTest: applicant.agreesToDrugTest ?? false,
         JobApplicationStatus: 'Pending',
       },
+      education,
+      employmentHistory,
+      trainings: activeJobApplication.trainings || [],
+      certificates: activeJobApplication.certificates || [],
     }
 
     const timeout = window.setTimeout(() => {
