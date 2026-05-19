@@ -49,14 +49,11 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
   const sectionPaddingBottom = isCompact ? 4 : 6;
   const textStrong = '#2f2417';
   const textMuted = '#6a553b';
-  const sidePadding = baseFontSize; // Approximate 1ch for PDF layout
+  const sidePadding = 50; // Approximate 1ch for PDF layout
 
   const styles = StyleSheet.create({
     page: {
-      paddingTop: sidePadding,
-      paddingRight: sidePadding,
-      paddingBottom: sidePadding,
-      paddingLeft: sidePadding,
+      padding: sidePadding,
       fontFamily: fontFamily,
       fontSize: baseFontSize,
       lineHeight: lh,

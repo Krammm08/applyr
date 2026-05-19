@@ -429,8 +429,10 @@ const ResumeAccordion = ({
             Download your resume as a PDF file. The document will be generated locally.
           </p>
           <PDFDownloadLink
+            key={`${resumeTemplate}-${previewFont}-${jobApplication.JobApplicationId ?? 'new'}`}
             document={
               <ResumePDF
+                key={`${resumeTemplate}-${previewFont}-${jobApplication.JobApplicationId ?? 'new'}`}
                 applicant={applicant}
                 jobApplication={jobApplication}
                 education={education}
