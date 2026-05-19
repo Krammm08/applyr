@@ -81,11 +81,13 @@ const chunkSectionsIntoPages = (
 		let start = 0;
 
 		while (start < lines.length) {
-			if (remaining < 2 + metrics.sectionGapLines) {
+			const sectionTitleLines = 2; // title + rule separator
+			const minimumSectionLines = sectionTitleLines + 1;
+			if (remaining < minimumSectionLines + metrics.sectionGapLines) {
 				pushPage();
 			}
 
-			const availableLines = Math.max(remaining - 1, 1);
+			const availableLines = Math.max(remaining - sectionTitleLines, 1);
 			const chunk = lines.slice(start, start + availableLines);
 			const titleSuffix = start === 0 ? "" : " (cont.)";
 
@@ -95,7 +97,7 @@ const chunkSectionsIntoPages = (
 				isEmpty: sectionIsEmpty,
 			});
 
-			remaining -= 1 + chunk.length;
+			remaining -= sectionTitleLines + chunk.length;
 			remaining -= metrics.sectionGapLines;
 			start += chunk.length;
 
@@ -172,16 +174,30 @@ const ResumePreview = ({
 			const headerHeight = headerRef.current?.getBoundingClientRect().height ?? 0;
 			const pageHeight = pageElement.getBoundingClientRect().height;
 			const availableHeight = pageHeight - paddingTop - paddingBottom - headerHeight;
-			const maxLines = Math.max(1, Math.floor(availableHeight / lineHeight));
+			const templateSafetyLines = resumeTemplate === "modern" ? 1 : 0;
+			const maxLines = Math.max(
+				1,
+				Math.floor(availableHeight / lineHeight) - templateSafetyLines,
+			);
 			const headerLines = Math.max(1, Math.ceil(headerHeight / lineHeight));
 			let sectionGapLines = 0;
 			const previewElement = previewRef.current;
 			if (previewElement) {
 				const previewStyles = window.getComputedStyle(previewElement);
+				let totalGap = 0;
 				const gapValue = Number.parseFloat(previewStyles.rowGap || previewStyles.gap);
 				if (Number.isFinite(gapValue)) {
-					sectionGapLines = Math.max(0, Math.round(gapValue / lineHeight));
+					totalGap += gapValue;
 				}
+				// Add padding approximations to safety margins
+				const sectionPadding = resumeTemplate === "compact" ? 4 : 6;
+				const lineMargin = Math.round(fontSize * 0.5);
+				totalGap += sectionPadding + lineMargin;
+				const templateGapSafety = resumeTemplate === "modern" ? 1 : 0;
+				sectionGapLines = Math.max(
+					0,
+					Math.round(totalGap / lineHeight) + templateGapSafety,
+				);
 			}
 
 			setPageMetrics((prev) =>

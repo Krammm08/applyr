@@ -85,6 +85,9 @@ function useStickyState<T>(defaultValue: T[], key: string): [T[], Dispatch<SetSt
 
 import { updateApplication as syncApplication } from '../services/applications'
 
+import ResumePDF from './ResumePDF';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+
 const ResumeAccordion = ({
   applicant,
   jobApplication,
@@ -423,16 +426,28 @@ const ResumeAccordion = ({
       <Accordion title="Download" onToggle={() => toggleSection('download')} isOpen={openSections.includes('download')}>
         <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-muted)' }}>
-            Download your resume as a PDF file. The browser print dialog will open automatically. Please make sure to save as PDF and disable headers/footers in the print settings.
+            Download your resume as a PDF file. The document will be generated locally.
           </p>
-          <button
-            type="button"
+          <PDFDownloadLink
+            document={
+              <ResumePDF
+                applicant={applicant}
+                jobApplication={jobApplication}
+                education={education}
+                employmentHistory={employmentHistory}
+                references={references}
+                trainings={trainings}
+                certificates={certificates}
+                previewFont={previewFont}
+                resumeTemplate={resumeTemplate}
+              />
+            }
+            fileName={`${applicant.applicantName || 'Resume'}.pdf`}
             className="primary-button"
-            onClick={() => window.print()}
-            style={{ alignSelf: 'flex-start' }}
+            style={{ alignSelf: 'flex-start', textDecoration: 'none' }}
           >
-            Download PDF
-          </button>
+            {({ loading }) => (loading ? 'Generating PDF...' : 'Download PDF')}
+          </PDFDownloadLink>
         </div>
       </Accordion>
       </div>
