@@ -943,15 +943,21 @@
   }
 
   .preview-panel {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
+    background: #fff;
     padding: 0;
-    border: none;
-    box-shadow: none;
-    background: transparent;
+    overflow: hidden;
+    display: flex; // <-- Add this
+    flex-direction: column; // <-- Add this
+  }
+
+  .preview-scroll {
+    height: 100%;
+    width: 100%; // <-- Add this
+    flex: 1; // <-- Add this to fill the panel
+    max-height: none;
+    overflow: hidden; // <-- Changed from auto (PDF viewer handles its own scroll)
+    padding: 8px;
+    border-radius: 14px;
   }
 
   .page-shell,
@@ -960,12 +966,6 @@
     margin: 0;
     padding: 0;
     width: 100%;
-    background: transparent;
-  }
-
-  .preview-scroll {
-    overflow: visible !important;
-    height: auto !important;
     background: transparent;
   }
 
@@ -987,4 +987,64 @@
   .topbar {
     display: none !important;
   }
+}
+
+.canvas-pdf-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  padding: 20px 0;
+  background-color: #f5f5f5;
+  min-height: 100%;
+  position: relative;
+}
+
+.pdf-render-engine {
+  width: 100%;
+  opacity: 1;
+  transition: opacity 0.15s ease-in-out;
+  will-change: opacity;
+
+  &.is-syncing {
+    // Keep it highly visible so there is zero flash, just a soft transition hint
+    opacity: 0.85;
+  }
+}
+
+.pdf-document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+}
+
+.pdf-page-wrapper {
+  background-color: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06), 0 4px 10px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.pdf-page-wrapper .react-pdf__Page__canvas {
+  max-width: 100%;
+  height: auto !important;
+  display: block;
+}
+
+.pdf-sync-indicator {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(47, 36, 23, 0.9);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  z-index: 10;
+  pointer-events: none;
 }

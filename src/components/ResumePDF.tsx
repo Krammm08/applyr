@@ -202,21 +202,21 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                   <SectionTitle title="Application Details" />
                   <View style={styles.sectionCol}>
                     <View style={styles.sectionColItem}>
-  <Text style={styles.bold}>Start date: </Text>
-  <Text>{getDisplayValue(jobApplication.availableStartDate)}</Text>
-</View>
-<View style={styles.sectionColItem}>
-  <Text style={styles.bold}>Expected salary: </Text>
-  <Text>{getDisplayValue(jobApplication.expectedSalary)}</Text>
-</View>
-<View style={styles.sectionColItem}>
-  <Text style={styles.bold}>Citizenship: </Text>
-  <Text>{getDisplayValue(applicant.citizenshipStatus)}</Text>
-</View>
-<View style={styles.sectionColItem}>
-  <Text style={styles.bold}>LinkedIn: </Text>
-  <Text>{getDisplayValue(applicant.linkedInUrl)}</Text>
-</View>
+                      <Text style={styles.bold}>Start date: </Text>
+                      <Text>{getDisplayValue(jobApplication.availableStartDate)}</Text>
+                    </View>
+                    <View style={styles.sectionColItem}>
+                      <Text style={styles.bold}>Expected salary: </Text>
+                      <Text>{getDisplayValue(jobApplication.expectedSalary)}</Text>
+                    </View>
+                    <View style={styles.sectionColItem}>
+                      <Text style={styles.bold}>Citizenship: </Text>
+                      <Text>{getDisplayValue(applicant.citizenshipStatus)}</Text>
+                    </View>
+                    <View style={styles.sectionColItem}>
+                      <Text style={styles.bold}>LinkedIn: </Text>
+                      <Text>{getDisplayValue(applicant.linkedInUrl)}</Text>
+                    </View>
                   </View>
                 </View>
               );
@@ -228,13 +228,13 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                   <SectionTitle title="Compliance" />
                   <View style={styles.sectionCol}>
                     <View style={styles.sectionColItem}>
-  <Text style={styles.bold}>Criminal history: </Text>
-  <Text>{getYesNo(applicant.hasCriminalHistory)}</Text>
-</View>
-<View style={styles.sectionColItem}>
-  <Text style={styles.bold}>Drug test agreement: </Text>
-  <Text>{getYesNo(applicant.agreesToDrugTest)}</Text>
-</View>
+                      <Text style={styles.bold}>Criminal history: </Text>
+                      <Text>{getYesNo(applicant.hasCriminalHistory)}</Text>
+                    </View>
+                    <View style={styles.sectionColItem}>
+                      <Text style={styles.bold}>Drug test agreement: </Text>
+                      <Text>{getYesNo(applicant.agreesToDrugTest)}</Text>
+                    </View>
                   </View>
                 </View>
               );
