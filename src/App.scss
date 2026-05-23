@@ -1579,3 +1579,25 @@
     background: #fff0f0;
   }
 }
+
+// ━━━━━━━━━━━━━━━ Applicant Profile Grouping ━━━━━━━━━━━━━━━━━━
+.groupBox {
+  border: 1px solid var(--stroke-soft);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 4px;
+  margin-bottom: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+
+  .title {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    background: var(--surface-soft);
+    padding: 0 8px;
+    transform: translateX(-50%);
+  }
+}

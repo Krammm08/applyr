@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Applicant } from "../types";
 import type { AuthSession } from "../services/auth";
+import GroupBox from "../components/GroupBox";
 
 type ApplicantEditPageProps = {
 	applicant: Applicant;
@@ -97,7 +98,8 @@ const ApplicantEditPage = ({
 				<form className="form-grid" onSubmit={handleSubmit}>
 					<div className="flex-column2">
 						<div className="col">
-							<label>
+							<GroupBox title="Change Name">
+              <label>
 								Applicant Name
 								<input
 									value={authSession?.user.name || applicant.applicantName}
@@ -113,7 +115,42 @@ const ApplicantEditPage = ({
 									onChange={(event) => setApplicantName(event.target.value)}
 								/>
 							</label>
+              </GroupBox>
+              <GroupBox title="Change Password">
+                <label>
+								<p className='required-asterisk'>
+									Current Password
+								</p>
+								<input
+									type="password"
+									value={currentPassword}
+									onChange={(event) => setCurrentPassword(event.target.value)}
+								/>
+							</label>
 							<label>
+								New Password
+								<input
+									type="password"
+									value={newPassword}
+									onChange={(event) => setNewPassword(event.target.value)}
+								/>
+							</label>
+							<label>
+								<span>
+                  <p className='required-asterisk'>
+                    Confirm New Password{" "}
+                  </p>
+								</span>
+								<input
+									type="password"
+									value={confirmPassword}
+									onChange={(event) => setConfirmPassword(event.target.value)}
+								/>
+							</label>
+              </GroupBox>
+						</div>
+						<div className="col">
+              <label>
               <p className='required-asterisk'>
                 Home Address 
               </p>
@@ -148,8 +185,6 @@ const ApplicantEditPage = ({
 									onChange={(event) => setLinkedInUrl(event.target.value)}
 								/>
 							</label>
-						</div>
-						<div className="col">
 							<label>
               <p className='required-asterisk'>
                 Citizenship Status{" "}
@@ -191,44 +226,13 @@ const ApplicantEditPage = ({
 								</select>
 							</label>
 						</div>
-						<div className="col">
-							<label>
-								<p className='required-asterisk'>
-									Current Password
-								</p>
-								<input
-									type="password"
-									value={currentPassword}
-									onChange={(event) => setCurrentPassword(event.target.value)}
-								/>
-							</label>
-							<label>
-								New Password
-								<input
-									type="password"
-									value={newPassword}
-									onChange={(event) => setNewPassword(event.target.value)}
-								/>
-							</label>
-							<label>
-								<span>
-                  <p className='required-asterisk'>
-                    Confirm New Password{" "}
-                  </p>
-								</span>
-								<input
-									type="password"
-									value={confirmPassword}
-									onChange={(event) => setConfirmPassword(event.target.value)}
-								/>
-							</label>
-
-							{error ? <p className="auth-error">{error}</p> : null}
-							{message ? <p className="upload-note done">{message}</p> : null}
-						</div>
+						{/* <div className="col"> */}
+						{/* </div> */}
 					</div>
 				</form>
 				<div className="form-actions">
+				  {error ? <p className="auth-error">{error}</p> : null}
+					{message ? <p className="upload-note done">{message}</p> : null}
 					<button
 						type="button"
 						className="outline-button"
