@@ -94,11 +94,12 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
       flexDirection: isModern ? 'row' : 'column',
       flexWrap: isModern ? 'wrap' : 'nowrap',
       textAlign: isModern ? 'left' : 'right',
+      alignItems: isModern ? 'center' : 'flex-end', // <-- Fix 1: Aligns the column items to the right
     },
     metaText: {
       fontSize: metaFontSize,
       marginRight: isModern ? 12 : 0,
-      marginBottom: isModern ? 6 : 2,
+      marginBottom: isModern ? 0 : 2, // <-- Fix 2: Changed from 6 to 0 to remove the bottom margin in modern
       color: textMuted,
     },
     section: {
