@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import './App.scss'
+import './styles/App.scss'
+
 import ApplicantEditPage from './pages/ApplicantEditPage'
 import EditorPage from './pages/EditorPage'
 import HomePage from './pages/HomePage'

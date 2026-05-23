@@ -1621,5 +1621,9 @@
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
+
+    &:focus {
+      outline: none
+    }
   }
 }

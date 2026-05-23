@@ -1,0 +1,274 @@
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ HOME & CARDS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+.home-shell {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 30px 70px rgba(4, 41, 56, 0.18);
+  background-image: radial-gradient(#938b8b 1px, transparent 0);
+  background-size: 30px 30px;
+  height: 100%;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.home-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  animation: slideInDown 0.5s ease-out;
+}
+
+.home-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  font-weight: bolder;
+  margin-bottom: 12px;
+}
+
+// Home Grid - Horizontally scrolling cards
+.home-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  gap: 24px;
+  padding-bottom: 24px;
+  padding-top: 0.5em;
+  -webkit-overflow-scrolling: touch;
+  animation: slideInUp 0.5s ease-out 0.1s backwards;
+}
+
+// Application Card
+.application-card {
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--stroke-soft);
+  border-radius: 18px;
+  background: var(--surface);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 360px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideInUp 0.5s ease-out backwards;
+
+  &:nth-child(1) { animation-delay: 0.1s; }
+  &:nth-child(2) { animation-delay: 0.2s; }
+  &:nth-child(3) { animation-delay: 0.3s; }
+  &:nth-child(4) { animation-delay: 0.4s; }
+}
+
+.application-card.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 16px 34px rgba(221, 95, 26, 0.18);
+}
+
+.application-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px rgba(47, 36, 23, 0.15);
+}
+
+.application-thumbnail {
+  padding: 0;
+  background: #f5f5f5;
+  border-bottom: 1px solid var(--stroke-soft);
+}
+
+// Thumbnail Preview
+.thumbnail-preview {
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumbnail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.thumbnail-capture {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 800px;
+  height: 1131px;
+  opacity: 0.01;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.thumbnail-skeleton {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  animation: pulse 1.5s infinite;
+}
+
+.thumbnail-preview .preview-scroll {
+  height: 100%;
+  padding: 0;
+  border-radius: 0;
+}
+
+.thumbnail-preview .preview-pages {
+  transform-origin: top left;
+}
+
+.thumbnail-preview .preview-page {
+  box-shadow: none;
+  border-radius: 10px;
+}
+
+// Thumbnail Meta
+.thumbnail-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.thumbnail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.thumb-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.thumb-role {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.thumb-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+// Application Meta
+.application-meta {
+  position: relative;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  h3 {
+    margin-bottom: 0;
+    font-size: 1.4rem;
+  }
+}
+
+// Status Chip
+.application-chip {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  z-index: 100;
+  align-self: flex-start;
+  background: var(--accent-weak);
+  color: var(--accent-dark);
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  animation: slideInRight 0.4s ease-out;
+}
+
+.application-chip.status-pending {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.application-chip.status-under-review {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.application-chip.status-interview {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.application-chip.status-offered {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.application-chip.status-rejected {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.application-chip.status-withdrawn {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.application-chip.status-open {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+// Delete Button
+.delete-button {
+  border: 1px solid #fecaca;
+  background: #f3d7d9;
+  color: #b91c1c;
+  font-weight: 700;
+  width: 100%;
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: #e7a0a0;
+    color: #5e0101;
+    border: 1px solid #c98080;
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Empty State Card
+.empty-card {
+  border: 1px dashed var(--stroke-strong);
+  border-radius: 18px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: slideInUp 0.5s ease-out;
+}

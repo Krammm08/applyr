@@ -1,0 +1,12 @@
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ MAIN STYLESHEET ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Modular SCSS Architecture
+// Import order: animations, layout, components, features
+
+@import "animations";
+@import "layout";
+@import "auth";
+@import "cards";
+@import "navbar";
+@import "editor";
+@import "modals";
+@import "preview";
