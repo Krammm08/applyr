@@ -523,61 +523,11 @@ const ResumeAccordion = ({
 
   const renderContact = () => (
     <div className="section-editor">
-      {renderEditorHeader('Contact Info', () => setActivePanel({ type: 'list' }), applicant.applicantName !== '' && applicant.homeAddress !== '' && applicant.phoneNumber !== '' && applicant.emailAddress !== '' && applicant.citizenshipStatus !== '' && jobApplication.appliedPosition !== '')}
+      {renderEditorHeader('Contact Info', () => setActivePanel({ type: 'list' }), applicant.applicantName !== '' && jobApplication.appliedPosition !== '')}
       <div className="form-grid">
         <label>
-          Full Name*
-          <input
-            value={applicant.applicantName}
-            onChange={(event) => updateApplicant('applicantName', event.target.value)}
-            placeholder="Jane Example"
-          />
-        </label>
-        <label>
-          Home Address*
-          <input
-            value={applicant.homeAddress}
-            onChange={(event) => updateApplicant('homeAddress', event.target.value)}
-            placeholder="123 Main St, City, ST"
-          />
-        </label>
-        <label>
-          Phone Number*
-          <input
-            value={applicant.phoneNumber}
-            onChange={(event) => updateApplicant('phoneNumber', event.target.value)}
-            placeholder="555-0134"
-          />
-        </label>
-        <label>
-          Email Address*
-          <input
-            type="email"
-            value={applicant.emailAddress}
-            onChange={(event) => updateApplicant('emailAddress', event.target.value)}
-            placeholder="jane@example.com"
-          />
-        </label>
-        <label>
-          LinkedIn URL
-          <input
-            value={applicant.linkedInUrl}
-            onChange={(event) => updateApplicant('linkedInUrl', event.target.value)}
-            placeholder="https://linkedin.com/in/jane"
-          />
-        </label>
-        <label>
-          Citizenship Status*
-          <select
-            value={applicant.citizenshipStatus}
-            onChange={(event) => updateApplicant('citizenshipStatus', event.target.value)}
-          >
-            <option value="">Choose status</option>
-            <option value="Citizen">Citizen</option>
-            <option value="Permanent Resident">Permanent Resident</option>
-            <option value="Visa Holder">Visa Holder</option>
-            <option value="Other">Other</option>
-          </select>
+          Applicant Name
+          <input value={applicant.applicantName} disabled />
         </label>
         <label>
           Applied Position*
@@ -603,6 +553,10 @@ const ResumeAccordion = ({
             onChange={(event) => updateApplication('expectedSalary', event.target.value)}
             placeholder="85000"
           />
+        </label>
+        <label>
+          Resume URL
+          <input value={jobApplication.resumeFileUrl} disabled />
         </label>
       </div>
     </div>

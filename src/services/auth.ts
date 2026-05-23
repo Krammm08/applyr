@@ -9,6 +9,17 @@ export type AuthSession = {
   user: AuthUser
 }
 
+export type ApplicantProfilePayload = {
+  applicantId: string
+  applicantName: string
+  homeAddress: string
+  phoneNumber: string
+  emailAddress: string
+  linkedInUrl: string
+  citizenshipStatus: string
+  hasCriminalHistory: boolean | null
+}
+
 type AuthResponse = {
   success: boolean
   data?: {
@@ -24,6 +35,8 @@ const API_BASE_URL = 'http://localhost:8000'
 const endpoints = {
   login: '/api/auth/login.php',
   register: '/api/auth/register.php',
+  profile: '/api/auth/profile.php',
+  updateProfile: '/api/auth/update_profile.php',
 }
 
 const requestJson = async <T>(url: string, body: Record<string, unknown>) => {
@@ -65,6 +78,43 @@ export const registerUser = async (name: string, email: string, password: string
 
   if (!payload.data?.token || !payload.data?.user) {
     throw new Error(payload.message || 'Signup failed')
+  }
+
+  return payload.data
+}
+
+export const getApplicantProfile = async (applicantId: string) => {
+  const payload = await requestJson<{ success: boolean; data: ApplicantProfilePayload }>(
+    `${API_BASE_URL}${endpoints.profile}`,
+    { applicantId },
+  )
+
+  if (!payload.data) {
+    throw new Error('Unable to load applicant profile')
+  }
+
+  return payload.data
+}
+
+export const updateApplicantProfile = async (payloadBody: {
+  applicantId: string
+  applicantName: string
+  homeAddress: string
+  phoneNumber: string
+  emailAddress: string
+  linkedInUrl: string
+  citizenshipStatus: string
+  hasCriminalHistory: boolean | null
+  currentPassword: string
+  newPassword?: string
+}) => {
+  const payload = await requestJson<{ success: boolean; data: ApplicantProfilePayload }>(
+    `${API_BASE_URL}${endpoints.updateProfile}`,
+    payloadBody,
+  )
+
+  if (!payload.data) {
+    throw new Error('Unable to update applicant profile')
   }
 
   return payload.data

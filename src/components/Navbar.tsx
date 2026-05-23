@@ -74,7 +74,7 @@ const Navbar = ({ authSession, onLogout }: NavbarProps) => {
                 </div>
                 <div className="dropdown-divider"></div>
                 <Link to="/" className="dropdown-item">Dashboard</Link>
-                {/* Add more links here later like Settings, Profile, etc. */}
+                <Link to="/applicant" className="dropdown-item">Applicant</Link>
                 <div className="dropdown-divider"></div>
                 <button 
                   type="button" 

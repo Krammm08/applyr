@@ -53,3 +53,15 @@ export const getResumeSettings = async (jobApplicationId: string) =>
     `${API_BASE_URL}/api/applications/get.php`,
     { jobApplicationId }
   )
+
+export const getApplicationsForApplicant = async (applicantId: string) =>
+  requestJson<{
+    success: boolean
+    data: Array<
+      JobApplication & {
+        resumeTemplate?: ApplicationResumeSettings['resumeTemplate']
+        previewFont?: string
+        settingsLastUpdated?: string
+      }
+    >
+  }>(`${API_BASE_URL}/api/applications/list.php`, { applicantId })

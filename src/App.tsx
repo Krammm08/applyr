@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import './App.scss'
+import ApplicantEditPage from './pages/ApplicantEditPage'
 import EditorPage from './pages/EditorPage'
 import HomePage from './pages/HomePage'
 import Navbar from './components/Navbar'
-import { updateApplication as syncApplication, getResumeSettings, deleteApplication } from './services/applications'
-import { loginUser, registerUser, type AuthSession } from './services/auth'
+import { updateApplication as syncApplication, getResumeSettings, deleteApplication, getApplicationsForApplicant } from './services/applications'
+import { loginUser, registerUser, getApplicantProfile, updateApplicantProfile, type AuthSession } from './services/auth'
 import type {
   Applicant,
   ApplicantReference,
@@ -174,6 +175,18 @@ const normalizeJobApplication = (
     new Date().toISOString(),
 })
 
+const normalizeBackendApplication = (
+  value: JobApplication & { previewFont?: string; resumeTemplate?: ApplicationResumeSettings['resumeTemplate'] },
+  fallbackApplicantId: string,
+): JobApplication => ({
+  ...createEmptyApplication(fallbackApplicantId),
+  ...value,
+  applicantId: value.applicantId || fallbackApplicantId,
+  references: value.references ?? [],
+  trainings: value.trainings ?? [],
+  certificates: value.certificates ?? [],
+  lastUpdated: value.lastUpdated || value.JobApplicationDate || new Date().toISOString(),
+})
 function App() {
   const storedAuthSession = loadStoredValue<AuthSession | null>(storageKeys.authSession, null)
   const initialStorageScope = getStorageScope(storedAuthSession?.user.id)
@@ -459,6 +472,51 @@ function App() {
     setAuthSession(null)
   }
 
+  const saveApplicantProfile = async (payload: {
+    applicantName: string
+    homeAddress: string
+    phoneNumber: string
+    emailAddress: string
+    linkedInUrl: string
+    citizenshipStatus: string
+    hasCriminalHistory: boolean | null
+    currentPassword: string
+    newPassword: string
+  }) => {
+    if (!applicant.applicantId) {
+      throw new Error('Applicant is not loaded.')
+    }
+
+    const updated = await updateApplicantProfile({
+      applicantId: applicant.applicantId,
+      ...payload,
+    })
+
+    setApplicant((prev) => ({
+      ...prev,
+      applicantName: updated.applicantName,
+      homeAddress: payload.homeAddress,
+      phoneNumber: payload.phoneNumber,
+      emailAddress: payload.emailAddress,
+      linkedInUrl: payload.linkedInUrl,
+      citizenshipStatus: payload.citizenshipStatus,
+      hasCriminalHistory: payload.hasCriminalHistory,
+    }))
+
+    setAuthSession((prev) =>
+      prev
+        ? {
+            ...prev,
+            user: {
+              ...prev.user,
+              name: updated.applicantName,
+              email: updated.emailAddress,
+            },
+          }
+        : prev,
+    )
+  }
+
   useEffect(() => {
     const nextScope = getStorageScope(authSession?.user.id)
     const nextApplicant = normalizeApplicant(
@@ -510,6 +568,53 @@ function App() {
     setPreviewFont(loadScopedValue<string>(nextScope, 'previewFont', 'Times New Roman'))
     setResumeTemplate(loadScopedValue<ResumeTemplateId>(nextScope, 'resumeTemplate', 'classic'))
     setHydratedStorageScope(nextScope)
+
+    if (authSession?.user.id) {
+      void Promise.all([
+        getApplicantProfile(authSession.user.id),
+        getApplicationsForApplicant(authSession.user.id),
+      ])
+        .then(([profile, response]) => {
+          setApplicant((prev) => ({
+            ...prev,
+            ...profile,
+            applicantId: profile.applicantId,
+          }))
+
+          const backendApplications = response.data.map((application) =>
+            normalizeBackendApplication(application, profile.applicantId),
+          )
+
+          setJobApplications((prev) => {
+            const localById = new Map(prev.map((item) => [item.JobApplicationId, item]))
+            return backendApplications.map((application) => {
+              const local = localById.get(application.JobApplicationId)
+              return {
+                ...application,
+                references: local?.references ?? application.references ?? [],
+                trainings: local?.trainings ?? application.trainings ?? [],
+                certificates: local?.certificates ?? application.certificates ?? [],
+              }
+            })
+          })
+
+          setResumeSettingsMap(() => {
+            const next: Record<string, ApplicationResumeSettings> = {}
+            for (const application of response.data) {
+              next[application.JobApplicationId] = {
+                JobApplicationId: application.JobApplicationId,
+                resumeTemplate: application.resumeTemplate || 'classic',
+                previewFont: application.previewFont || 'Helvetica',
+                lastUpdated: application.settingsLastUpdated,
+              }
+            }
+            return next
+          })
+        })
+        .catch(() => {
+          // Keep scoped cache if the backend snapshot is unavailable.
+        })
+    }
   }, [authSession?.user.id])
 
   useEffect(() => {
@@ -803,6 +908,16 @@ function App() {
                 handleResumeUpload={handleResumeUpload}
                 onDeleteJobApplication={deleteJobApplication}
               />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/applicant"
+          element={
+            authenticated ? (
+              <ApplicantEditPage applicant={applicant} authSession={authSession} onSaveApplicant={saveApplicantProfile} />
             ) : (
               <Navigate to="/" replace />
             )
