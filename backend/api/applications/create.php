@@ -59,7 +59,7 @@ try {
 
     $statement = $db->prepare(
         'INSERT INTO JobApplication (JobApplicationId, applicantId, appliedPosition, JobApplicationDate, JobApplicationStatus, availableStartDate, expectedSalary, resumeFileUrl, agreesToDrugTest, agreedToTerms, dateAgreed, lastUpdated) '
-        . 'VALUES (:jobApplicationId, :applicantId, :appliedPosition, :jobApplicationDate, :status, :availableStartDate, :expectedSalary, :resumeFileUrl, :agreesToDrugTest, 1, CURRENT_DATE, NOW())'
+        . 'VALUES (:jobApplicationId, :applicantId, :appliedPosition, :jobApplicationDate, :status, :availableStartDate, :expectedSalary, :resumeFileUrl, :agreesToDrugTest, :agreedToTerms, :dateAgreed, NOW())'
     );
 
     $statement->execute([
@@ -72,6 +72,8 @@ try {
         'expectedSalary' => $jobApplication['expectedSalary'] !== '' ? $jobApplication['expectedSalary'] : null,
         'resumeFileUrl' => $jobApplication['resumeFileUrl'] ?: null,
         'agreesToDrugTest' => (int)($jobApplication['agreesToDrugTest'] ?? 0),
+        'agreedToTerms' => (int)($jobApplication['agreedToTerms'] ?? 0),
+        'dateAgreed' => !empty($jobApplication['dateAgreed']) ? $jobApplication['dateAgreed'] : date('Y-m-d H:i:s'),
     ]);
 
     // Insert ApplicationResumeSettings with defaults

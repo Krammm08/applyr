@@ -189,7 +189,7 @@ CREATE TABLE `JobApplication` (
   `resumeFileUrl` varchar(255) DEFAULT NULL,
   `agreesToDrugTest` tinyint(1) NOT NULL DEFAULT 0,
   `agreedToTerms` tinyint(1) NOT NULL DEFAULT 1,
-  `dateAgreed` date NOT NULL DEFAULT curdate(),
+  `dateAgreed` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lastUpdated` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`JobApplicationId`),
   KEY `applicantId` (`applicantId`),

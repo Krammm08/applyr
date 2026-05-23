@@ -110,7 +110,7 @@ try {
         'resumeFileUrl' => $jobApplication['resumeFileUrl'] ?: null,
         'agreesToDrugTest' => (int)($jobApplication['agreesToDrugTest'] ?? 0),
         'agreedToTerms' => (int)($jobApplication['agreedToTerms'] ?? 0),
-        'dateAgreed' => !empty($jobApplication['dateAgreed']) ? $jobApplication['dateAgreed'] : null,
+        'dateAgreed' => !empty($jobApplication['dateAgreed']) ? $jobApplication['dateAgreed'] : date('Y-m-d H:i:s'),
     ]);
 
     // Insert/update education

@@ -271,7 +271,7 @@ const ResumeAccordion = ({
                 onClick={async () => {
                   // mark agreed locally, sync and then trigger download
                   updateApplication('agreedToTerms', true)
-                  updateApplication('dateAgreed', new Date().toISOString().slice(0,10))
+                  updateApplication('dateAgreed', new Date().toISOString())
                   setShowAgreeModal(false)
                   setIsSyncing(true)
                   try {

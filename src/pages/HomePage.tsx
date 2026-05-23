@@ -48,7 +48,7 @@ const formatTime = (value: string) => {
 }
 
 const getStatusClass = (status?: string) => {
-  const normalized = (status || 'Open').toLowerCase().replace(/[^a-z]+/g, '-')
+  const normalized = (status || 'pending').toLowerCase().replace(/[^a-z]+/g, '-')
   return `application-chip status-${normalized}`
 }
 
@@ -282,7 +282,7 @@ const HomePage = ({
                   <p>{formatTime(application.lastUpdated)}</p>
                 </span>
                 <span className={getStatusClass(application.JobApplicationStatus)}>
-                  {application.JobApplicationStatus || 'Editting'}
+                  {application.JobApplicationStatus || 'Pending'}
                 </span>
               </div>
             </Link>

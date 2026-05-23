@@ -29,9 +29,9 @@ const NewApplicationModal = ({ isOpen, onClose, onCreate }: Props) => {
     <div className="modal-backdrop">
       <div className="modal">
         <h3>Create New Application</h3>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className='form-grid'>
           <label>
-            Applied Position <span className="required-asterisk">*</span>
+            <span>Applied Position <span className="required-asterisk">*</span></span>
             <input value={appliedPosition} onChange={(e) => setAppliedPosition(e.target.value)} />
           </label>
           <label>
@@ -42,7 +42,7 @@ const NewApplicationModal = ({ isOpen, onClose, onCreate }: Props) => {
             <input type="checkbox" checked={agrees} onChange={(e) => setAgrees(e.target.checked)} /> I agree to drug testing
           </label>
           {error ? <p style={{ color: '#c93b3b' }}>{error}</p> : null}
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12, width: '100%' }}>
             <button type="button" className="outline-button" onClick={onClose}>Cancel</button>
             <button type="submit" className="primary-button">Create</button>
           </div>
