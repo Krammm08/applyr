@@ -16,7 +16,8 @@
   line-height: 1.45;
   font-weight: 400;
   color: var(--text-strong);
-  background: radial-gradient(circle at top right, #ffeac8 0%, #f5f0e7 48%, #d9e9e9 100%);
+  background: radial-gradient(circle at top right, #ffeac85e 0%, #f5f0e7ba 48%, #d9e9e982 100%
+100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
