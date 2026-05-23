@@ -261,8 +261,13 @@
 }
 
 .required-asterisk {
+  color: var(--text-strong)
+}
+
+.required-asterisk::after {
+  content: '*';
   color: #c93b3b;
-  // margin-left: 4px;
+  margin-left: 4px;
 }
 
 /* Simple modal for confirmation */
@@ -550,8 +555,6 @@
   background: #e7a0a0;
   color: #5e0101;
   border: 1px solid #c98080;
-
-
 }
 
 .empty-card {

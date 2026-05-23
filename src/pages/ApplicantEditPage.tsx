@@ -105,36 +105,36 @@ const ApplicantEditPage = ({
 								/>
 							</label>
 							<label>
-								<span>
-									New Full Name <span className="required-asterisk">*</span>
-								</span>
+              <p className='required-asterisk'>
+                New Full Name 
+              </p>
 								<input
 									value={applicantName}
 									onChange={(event) => setApplicantName(event.target.value)}
 								/>
 							</label>
 							<label>
-								<span>
-									Home Address <span className="required-asterisk">*</span>
-								</span>
+              <p className='required-asterisk'>
+                Home Address 
+              </p>
 								<input
 									value={homeAddress}
 									onChange={(event) => setHomeAddress(event.target.value)}
 								/>
 							</label>
 							<label>
-								<span>
-									Phone Number <span className="required-asterisk">*</span>
-								</span>
+              <p className='required-asterisk'>
+                Phone Number 
+              </p>
 								<input
 									value={phoneNumber}
 									onChange={(event) => setPhoneNumber(event.target.value)}
 								/>
 							</label>
 							<label>
-								<span>
-									Email Address <span className="required-asterisk">*</span>
-								</span>
+                <p className='required-asterisk'>
+                  Email Address 
+                </p>
 								<input
 									type="email"
 									value={emailAddress}
@@ -151,10 +151,9 @@ const ApplicantEditPage = ({
 						</div>
 						<div className="col">
 							<label>
-								<span>
-									Citizenship Status{" "}
-									<span className="required-asterisk">*</span>
-								</span>
+              <p className='required-asterisk'>
+                Citizenship Status{" "}
+              </p>
 								<select
 									value={citizenshipStatus}
 									onChange={(event) => setCitizenshipStatus(event.target.value)}
@@ -167,10 +166,9 @@ const ApplicantEditPage = ({
 								</select>
 							</label>
 							<label>
-								<span>
-									Has Criminal History{" "}
-									<span className="required-asterisk">*</span>
-								</span>
+              <p className='required-asterisk'>
+                Has Criminal History{" "}
+              </p>
 								<select
 									value={
 										hasCriminalHistory === null
@@ -195,9 +193,9 @@ const ApplicantEditPage = ({
 						</div>
 						<div className="col">
 							<label>
-								<span>
-									Current Password <span className="required-asterisk">*</span>
-								</span>
+								<p className='required-asterisk'>
+									Current Password
+								</p>
 								<input
 									type="password"
 									value={currentPassword}
@@ -214,8 +212,9 @@ const ApplicantEditPage = ({
 							</label>
 							<label>
 								<span>
-									Confirm New Password{" "}
-									<span className="required-asterisk">*</span>
+                  <p className='required-asterisk'>
+                    Confirm New Password{" "}
+                  </p>
 								</span>
 								<input
 									type="password"

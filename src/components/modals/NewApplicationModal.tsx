@@ -31,7 +31,9 @@ const NewApplicationModal = ({ isOpen, onClose, onCreate }: Props) => {
         <h3>Create New Application</h3>
         <form onSubmit={handleSubmit} className='form-grid'>
           <label>
-            <span>Applied Position <span className="required-asterisk">*</span></span>
+            <p className='required-asterisk'>
+              Applied Position
+            </p>
             <input value={appliedPosition} onChange={(e) => setAppliedPosition(e.target.value)} />
           </label>
           <label>
