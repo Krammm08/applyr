@@ -1,6 +1,6 @@
 .page-shell {
   width: 100%;
-  height: calc(100vh - 65px);
+  height: 100vh;
   margin: 0;
   padding: 24px;
   border-radius: 0;
@@ -11,11 +11,10 @@
   flex-direction: column;
   background-image: radial-gradient(#dbbaba 1px, transparent 0);
   background-size: 30px 30px;
-  overflow: scroll;
 }
 
 .home-shell {
-  // min-height: 100vh;
+  min-height: 100vh;
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -26,7 +25,6 @@
   flex-direction: column;
   background-image: radial-gradient(#938b8b 1px, transparent 0);
   background-size: 30px 30px;
-  height: 100%;
 }
 
 .home-header {
@@ -261,11 +259,6 @@
 }
 
 .required-asterisk {
-  color: var(--text-strong)
-}
-
-.required-asterisk::after {
-  content: '*';
   color: #c93b3b;
   margin-left: 4px;
 }
@@ -274,20 +267,18 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0,0,0,0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
-
 .modal {
   background: #fff;
   padding: 20px;
   border-radius: 8px;
   max-width: 520px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-  gap: 2em;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
 }
 
 .submit-btn {
@@ -479,7 +470,6 @@
 }
 
 .application-meta {
-  position: relative;
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -487,16 +477,10 @@
 
   h3 {
     margin-bottom: 0;
-    font-size: 1.4rem;
   }
 }
 
 .application-chip {
-  position: absolute;
-  top: 1em;
-  right: 1em;
-  z-index: 100;
-
   align-self: flex-start;
   background: var(--accent-weak);
   color: var(--accent-dark);
@@ -543,18 +527,13 @@
 
 .delete-button {
   border: 1px solid #fecaca;
-  background: #f3d7d9;
+  background: #fff1f2;
   color: #b91c1c;
   font-weight: 700;
-  width: 100%;
-  border-radius: 10px;
-  padding: 10px 12px;
 }
 
 .delete-button:hover {
-  background: #e7a0a0;
-  color: #5e0101;
-  border: 1px solid #c98080;
+  background: #fee2e2;
 }
 
 .empty-card {
@@ -577,11 +556,10 @@
 
 .kicker {
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.12em;
   color: var(--text-muted);
-  font-size: 1.4rem;
-  font-weight: bolder;
-  margin-bottom: 12px;
+  font-size: 0.77rem;
+  margin-bottom: 6px;
 }
 
 .resume-shell {
@@ -668,21 +646,6 @@
   gap: 14px;
   flex-wrap: wrap;
   flex-direction: column;
-
-  // only do this for label that contains an input that is not checkbox
-  label:not(:has(input[type="checkbox"])) {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-weight: 600;
-    color: var(--text-strong);
-  }
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.7em;
 }
 
 .inline-input {
@@ -697,13 +660,12 @@
   border-top: 1px dashed var(--stroke-soft);
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━ Modal ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-.modal {
-  width: 40em;
-
-  h3 {
-    font-size: 1.4em;
-  }
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-strong);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━ SCROLLBAR ━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1577,53 +1539,5 @@
 
   &:hover {
     background: #fff0f0;
-  }
-}
-
-// ━━━━━━━━━━━━━━━ Applicant Profile Grouping ━━━━━━━━━━━━━━━━━━
-.groupBox {
-  border: 1px solid var(--stroke-soft);
-  border-radius: 12px;
-  padding: 16px;
-  margin: 4px;
-  margin-bottom: 1em;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  position: relative;
-
-  .title {
-    position: absolute;
-    top: -11px;
-    left: 50%;
-    background: var(--surface-soft);
-    padding: 0 8px;
-    transform: translateX(-50%);
-  }
-}
-
-.password-field {
-  display: flex;
-  position: relative;
-
-  input {
-    flex: 1;
-  }
-
-  .eye-button {
-    position: absolute;
-    right: 2px;
-    transform: translateY(65%);
-  }
-
-  button {
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-
-    &:focus {
-      outline: none
-    }
   }
 }
