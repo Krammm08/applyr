@@ -560,7 +560,7 @@ const ResumeAccordion = ({
   const renderEditorHeader = (title: string, onBack: () => void, allowBack?: boolean) => (
     <div className="section-editor-header">
         <button type="button" className={`back-button ${allowBack ? '' : 'disabled-btn'}`} onClick={onBack} disabled={!allowBack}>
-          Back
+          Submit
         </button>
       <h2>{title}</h2>
     </div>

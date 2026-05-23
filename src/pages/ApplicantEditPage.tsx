@@ -54,6 +54,21 @@ const ApplicantEditPage = ({
 		setHasCriminalHistory(applicant.hasCriminalHistory);
 	}, [applicant]);
 
+	// Auto-redirect if all onboarding fields are complete
+	useEffect(() => {
+		const fieldsComplete = [
+			applicant.applicantName.trim(),
+			applicant.homeAddress.trim(),
+			applicant.phoneNumber.trim(),
+			applicant.citizenshipStatus.trim(),
+			applicant.hasCriminalHistory === null ? '' : 'ok',
+		].filter(Boolean).length;
+
+		if (fieldsComplete === 5) {
+			navigate('/', { replace: true });
+		}
+	}, [applicant, navigate]);
+
 	const handleSubmit = async (event: FormEvent) => {
 		event.preventDefault();
 		setError("");
