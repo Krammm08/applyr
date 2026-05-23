@@ -989,28 +989,41 @@
   }
 }
 
-.canvas-pdf-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
+// ━━━━━━━━━━━━━━━━━━━━━━━━━ PING-PONG BUFFER VIEWER ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+.preview-scroll {
+  overflow-x: hidden; // Kills the rogue right margin horizontal scrolling
   width: 100%;
+  box-sizing: border-box;
+}
+
+.canvas-pdf-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  width: 100%;
+  box-sizing: border-box;
   padding: 20px 0;
   background-color: #f5f5f5;
   min-height: 100%;
-  position: relative;
 }
 
-.pdf-render-engine {
+// Both buffers sit cleanly inside the exact same grid cell
+.pdf-layer {
+  grid-area: 1 / 1;
   width: 100%;
-  opacity: 1;
-  transition: opacity 0.15s ease-in-out;
+  min-width: 0; // <-- CRUCIAL: Stops the grid blowout
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease-in-out;
   will-change: opacity;
+}
 
-  &.is-syncing {
-    // Keep it highly visible so there is zero flash, just a soft transition hint
-    opacity: 0.85;
-  }
+// The currently active buffer
+.pdf-layer.is-active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
 }
 
 .pdf-document {
@@ -1019,6 +1032,7 @@
   align-items: center;
   gap: 32px;
   width: 100%;
+  min-width: 0; // <-- CRUCIAL: Allows children to shrink
 }
 
 .pdf-page-wrapper {
@@ -1027,24 +1041,29 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06), 0 4px 10px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   border: 1px solid rgba(0, 0, 0, 0.06);
+  max-width: 100%; // Prevents the wrapper from exceeding the viewport
 }
 
+// React-PDF generates a parent <div> around the canvas. Both need to scale.
+// React-PDF generates a parent <div> around the canvas. Both need to scale.
+.pdf-page-wrapper .react-pdf__Page,
 .pdf-page-wrapper .react-pdf__Page__canvas {
-  max-width: 100%;
-  height: auto !important;
+  max-width: 100% !important;
+  width: 100% !important; // <-- ADD THIS: Crushes the inline 800px width
+  height: auto !important; // <-- Keeps the A4 aspect ratio perfect
   display: block;
 }
 
 .pdf-sync-indicator {
-  position: absolute;
-  top: 16px;
-  right: 16px;
+  position: fixed;
+  top: 40px;
+  right: 40px;
   background: rgba(47, 36, 23, 0.9);
   color: #ffffff;
   padding: 6px 14px;
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
-  z-index: 10;
+  z-index: 100;
   pointer-events: none;
 }
