@@ -24,8 +24,6 @@ type ApplicationThumbnailProps = {
 
 const ApplicationThumbnail = (props: ApplicationThumbnailProps) => {
   const captureRef = useRef<HTMLDivElement | null>(null);
-  // 1. Initialize lazily so it grabs the cache on the very first render instantly
-
   
   // Create a strict hash of the content. If ANY text changes, the thumbnail updates instantly.
   const cacheKey = useMemo(() => {
@@ -39,6 +37,7 @@ const ApplicationThumbnail = (props: ApplicationThumbnailProps) => {
     return `applyr:thumb:${props.jobApplication.JobApplicationId}:${hash}`;
   }, [props]);
 
+  // 1. Initialize lazily so it grabs the cache on the very first render instantly
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(() => {
     return typeof window !== 'undefined' ? window.localStorage.getItem(cacheKey) : null;
   });
@@ -46,8 +45,7 @@ const ApplicationThumbnail = (props: ApplicationThumbnailProps) => {
   // 2. Track the previous cache key to detect when the application data changes
   const [prevCacheKey, setPrevCacheKey] = useState(cacheKey);
 
-  // 3. "Render-Phase Update" (The exact method recommended by the React Docs)
-  // If the key changed, update the state immediately before the browser even tries to paint
+  // 3. "Render-Phase Update"
   if (cacheKey !== prevCacheKey) {
     setPrevCacheKey(cacheKey);
     setThumbnailUrl(window.localStorage.getItem(cacheKey));
@@ -66,11 +64,11 @@ const ApplicationThumbnail = (props: ApplicationThumbnailProps) => {
       const canvases = element.querySelectorAll('canvas');
       let targetCanvas: HTMLCanvasElement | null = null;
       
-      // FIX 1: Use a standard loop so we can 'break' after finding the FIRST page
+      // Use a standard loop so we can 'break' after finding the FIRST page
       for (const c of Array.from(canvases)) {
          if (c.width > 100 && c.height > 100) {
            targetCanvas = c;
-           break; // <-- CRUCIAL: Stops immediately at Page 1!
+           break; 
          }
       }
 
@@ -80,9 +78,45 @@ const ApplicationThumbnail = (props: ApplicationThumbnailProps) => {
         setTimeout(() => {
           if (canceled) return;
           try {
-            const dataUrl = targetCanvas.toDataURL('image/jpeg', 0.85);
+            // Lowered quality to 0.7 for significant memory savings on thumbnails
+            const dataUrl = targetCanvas.toDataURL('image/jpeg', 0.7);
+            
             if (dataUrl.length > 500) { 
-              window.localStorage.setItem(cacheKey, dataUrl);
+              
+              // --- 1. CACHE EVICTION: Delete old thumbnails for this specific application ---
+              const prefix = `applyr:thumb:${props.jobApplication.JobApplicationId}:`;
+              try {
+                for (let i = 0; i < window.localStorage.length; i++) {
+                  const key = window.localStorage.key(i);
+                  if (key && key.startsWith(prefix) && key !== cacheKey) {
+                    window.localStorage.removeItem(key);
+                  }
+                }
+                // Save the new thumbnail
+                window.localStorage.setItem(cacheKey, dataUrl);
+              } catch (storageError) {
+                
+                console.warn("Storage quota hit. Running emergency purge...");
+                
+                // --- 2. EMERGENCY PURGE: If still full, nuke ALL thumbnail caches ---
+                const keysToRemove = [];
+                for (let i = 0; i < window.localStorage.length; i++) {
+                  const key = window.localStorage.key(i);
+                  if (key && key.startsWith('applyr:thumb:')) {
+                    keysToRemove.push(key);
+                  }
+                }
+                keysToRemove.forEach(k => window.localStorage.removeItem(k));
+                
+                try {
+                  // Try one last time after complete purge
+                  window.localStorage.setItem(cacheKey, dataUrl);
+                } catch (e) {
+                  console.error("Local storage completely full. Falling back to memory-only.");
+                  // It's okay if it fails here, `setThumbnailUrl` will still show it to the user in memory!
+                }
+              }
+
               setThumbnailUrl(dataUrl);
             }
           } catch (e) {
@@ -99,7 +133,7 @@ const ApplicationThumbnail = (props: ApplicationThumbnailProps) => {
       canceled = true;
       window.clearInterval(checkInterval);
     };
-  }, [thumbnailUrl, cacheKey]);
+  }, [thumbnailUrl, cacheKey, props.jobApplication.JobApplicationId]);
 
   return (
     <div className="thumbnail-preview">

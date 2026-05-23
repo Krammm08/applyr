@@ -571,6 +571,7 @@ function App() {
               activeJobApplicationId={activeJobApplicationId}
               resumeTemplate={resumeTemplate}
               previewFont={previewFont}
+              resumeSettingsMap={resumeSettingsMap}
               education={education}
               employmentHistory={employmentHistory}
               authSession={authSession}

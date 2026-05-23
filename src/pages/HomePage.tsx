@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import ApplicationThumbnail from '../components/ApplicationThumbnail'
 import type {
   Applicant,
+  ApplicationResumeSettings,
   Education,
   EmploymentHistory,
   JobApplication,
@@ -19,6 +20,7 @@ type HomePageProps = {
   activeJobApplicationId: string
   resumeTemplate: 'classic' | 'compact' | 'modern'
   previewFont: string
+  resumeSettingsMap: Record<string, ApplicationResumeSettings>
   education: Education[]
   employmentHistory: EmploymentHistory[]
   authSession: AuthSession | null
@@ -57,6 +59,7 @@ const HomePage = ({
   activeJobApplicationId,
   resumeTemplate,
   previewFont,
+  resumeSettingsMap,
   education,
   employmentHistory,
   authSession,
@@ -235,17 +238,24 @@ const HomePage = ({
               }`}
             >
               <div className="application-thumbnail">
-                <ApplicationThumbnail
-                  applicant={applicant}
-                  jobApplication={application}
-                  education={education}
-                  employmentHistory={employmentHistory}
-                  references={application.references || []}
-                  trainings={application.trainings || []}
-                  certificates={application.certificates || []}
-                  previewFont={previewFont}
-                  resumeTemplate={resumeTemplate}
-                />
+                {(() => {
+                  const settings = resumeSettingsMap[application.JobApplicationId]
+                  const appPreviewFont = settings?.previewFont ?? previewFont
+                  const appResumeTemplate = settings?.resumeTemplate ?? resumeTemplate
+                  return (
+                    <ApplicationThumbnail
+                      applicant={applicant}
+                      jobApplication={application}
+                      education={education}
+                      employmentHistory={employmentHistory}
+                      references={application.references || []}
+                      trainings={application.trainings || []}
+                      certificates={application.certificates || []}
+                      previewFont={appPreviewFont}
+                      resumeTemplate={appResumeTemplate}
+                    />
+                  )
+                })()}
               </div>
               <div className="application-meta">
                 <h3>{application.appliedPosition || `Application ${index + 1}`}</h3>
