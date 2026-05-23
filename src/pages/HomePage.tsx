@@ -274,14 +274,19 @@ const HomePage = ({
                 })()}
               </div>
               <div className="application-meta">
-                <h3>{application.appliedPosition || `Application ${index + 1}`}</h3>
-                <p>Applied: {formatDate(application.JobApplicationDate)}</p>
+                <h3 className='application-meta-title'>{application.appliedPosition || `Application ${index + 1}`}</h3>
+                <span className="flex-row">
+
+                  <strong>Applied: </strong>
+                <p>
+                  {formatDate(application.JobApplicationDate)}</p>
+                </span>
                 
-                <span>
-                  {/* <strong>Updated on: </strong> */}
+                <span className='flex-row'>
+                  <strong>Updated: </strong>
                   <p>{formatTime(application.lastUpdated)}</p>
                 </span>
-                <span className={getStatusClass(application.JobApplicationStatus)}>
+              <span className={getStatusClass(application.JobApplicationStatus)}>
                   {application.JobApplicationStatus || 'Pending'}
                 </span>
               </div>

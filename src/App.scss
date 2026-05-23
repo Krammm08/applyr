@@ -474,6 +474,7 @@
 }
 
 .application-meta {
+  position: relative;
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -481,10 +482,16 @@
 
   h3 {
     margin-bottom: 0;
+    font-size: 1.4rem;
   }
 }
 
 .application-chip {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  z-index: 100;
+
   align-self: flex-start;
   background: var(--accent-weak);
   color: var(--accent-dark);

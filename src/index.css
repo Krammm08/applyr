@@ -41,7 +41,7 @@ body {
 h1,
 h2,
 h3 {
-  font-family: 'Fraunces', Georgia, serif;
+  /* font-family: 'Fraunces', Georgia, serif; */
   color: var(--text-strong);
   margin-top: 0;
 }
