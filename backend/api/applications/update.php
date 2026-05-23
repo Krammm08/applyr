@@ -85,7 +85,7 @@ try {
 
     $statement = $db->prepare(
         'INSERT INTO JobApplication (JobApplicationId, applicantId, appliedPosition, JobApplicationDate, JobApplicationStatus, availableStartDate, expectedSalary, resumeFileUrl, agreesToDrugTest, agreedToTerms, dateAgreed, lastUpdated) '
-        . 'VALUES (:jobApplicationId, :applicantId, :appliedPosition, :jobApplicationDate, :status, :availableStartDate, :expectedSalary, :resumeFileUrl, :agreesToDrugTest, 1, CURRENT_DATE, NOW()) '
+        . 'VALUES (:jobApplicationId, :applicantId, :appliedPosition, :jobApplicationDate, :status, :availableStartDate, :expectedSalary, :resumeFileUrl, :agreesToDrugTest, :agreedToTerms, :dateAgreed, NOW()) '
         . 'ON DUPLICATE KEY UPDATE '
         . 'appliedPosition = VALUES(appliedPosition), '
         . 'JobApplicationDate = VALUES(JobApplicationDate), '
@@ -94,6 +94,8 @@ try {
         . 'expectedSalary = VALUES(expectedSalary), '
         . 'resumeFileUrl = VALUES(resumeFileUrl), '
         . 'agreesToDrugTest = VALUES(agreesToDrugTest), '
+        . 'agreedToTerms = VALUES(agreedToTerms), '
+        . 'dateAgreed = VALUES(dateAgreed), '
         . 'lastUpdated = NOW()'
     );
 
@@ -107,6 +109,8 @@ try {
         'expectedSalary' => $jobApplication['expectedSalary'] !== '' ? $jobApplication['expectedSalary'] : null,
         'resumeFileUrl' => $jobApplication['resumeFileUrl'] ?: null,
         'agreesToDrugTest' => (int)($jobApplication['agreesToDrugTest'] ?? 0),
+        'agreedToTerms' => (int)($jobApplication['agreedToTerms'] ?? 0),
+        'dateAgreed' => !empty($jobApplication['dateAgreed']) ? $jobApplication['dateAgreed'] : null,
     ]);
 
     // Insert/update education

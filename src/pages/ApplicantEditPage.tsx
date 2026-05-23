@@ -89,19 +89,19 @@ const ApplicantEditPage = ({ applicant, authSession, onSaveApplicant }: Applican
             <input value={authSession?.user.name || applicant.applicantName} disabled />
           </label>
           <label>
-            New Full Name*
+            New Full Name <span className="required-asterisk">*</span>
             <input value={applicantName} onChange={(event) => setApplicantName(event.target.value)} />
           </label>
           <label>
-            Home Address*
+            Home Address <span className="required-asterisk">*</span>
             <input value={homeAddress} onChange={(event) => setHomeAddress(event.target.value)} />
           </label>
           <label>
-            Phone Number*
+            Phone Number <span className="required-asterisk">*</span>
             <input value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} />
           </label>
           <label>
-            Email Address*
+            Email Address <span className="required-asterisk">*</span>
             <input type="email" value={emailAddress} onChange={(event) => setEmailAddress(event.target.value)} />
           </label>
           <label>
@@ -109,7 +109,7 @@ const ApplicantEditPage = ({ applicant, authSession, onSaveApplicant }: Applican
             <input value={linkedInUrl} onChange={(event) => setLinkedInUrl(event.target.value)} />
           </label>
           <label>
-            Citizenship Status*
+            Citizenship Status <span className="required-asterisk">*</span>
             <select value={citizenshipStatus} onChange={(event) => setCitizenshipStatus(event.target.value)}>
               <option value="">Choose status</option>
               <option value="Citizen">Citizen</option>
@@ -119,7 +119,7 @@ const ApplicantEditPage = ({ applicant, authSession, onSaveApplicant }: Applican
             </select>
           </label>
           <label>
-            Has Criminal History*
+            Has Criminal History <span className="required-asterisk">*</span>
             <select
               value={hasCriminalHistory === null ? '' : hasCriminalHistory ? 'yes' : 'no'}
               onChange={(event) =>
@@ -132,7 +132,7 @@ const ApplicantEditPage = ({ applicant, authSession, onSaveApplicant }: Applican
             </select>
           </label>
           <label>
-            Current Password*
+            Current Password <span className="required-asterisk">*</span>
             <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />
           </label>
           <label>

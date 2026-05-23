@@ -130,7 +130,6 @@ const ResumeAccordion = ({
   addCertificate,
   removeCertificate,
   reorderCertificates,
-  handleResumeUpload,
   onDeleteJobApplication,
   onSyncRequest,
 }: ResumeAccordionPropsWithSync) => {
@@ -143,9 +142,15 @@ const ResumeAccordion = ({
   const [isSyncing, setIsSyncing] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdfLinkRef = useRef<any>(null)
+  const [showAgreeModal, setShowAgreeModal] = useState(false)
 
   // Handle PDF download with sync - ensure data is saved before downloading
   const handlePDFDownload = async () => {
+    // If user hasn't agreed to terms, show modal first
+    if (!jobApplication?.agreedToTerms) {
+      setShowAgreeModal(true)
+      return
+    }
     setIsSyncing(true)
     try {
       await onSyncRequest?.()
@@ -253,6 +258,36 @@ const ResumeAccordion = ({
             </label>
           </div>
         </Accordion>
+      {showAgreeModal ? (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h3>Confirm Terms</h3>
+            <p>By downloading this resume you confirm that the information contained is truthful and accurate. Do you agree?</p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+              <button type="button" className="outline-button" onClick={() => setShowAgreeModal(false)}>Cancel</button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={async () => {
+                  // mark agreed locally, sync and then trigger download
+                  updateApplication('agreedToTerms', true)
+                  updateApplication('dateAgreed', new Date().toISOString().slice(0,10))
+                  setShowAgreeModal(false)
+                  setIsSyncing(true)
+                  try {
+                    await onSyncRequest?.()
+                    if (pdfLinkRef.current) pdfLinkRef.current.click()
+                  } finally {
+                    setIsSyncing(false)
+                  }
+                }}
+              >
+                I agree
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
         <Accordion
           title="Application Settings"
@@ -262,7 +297,7 @@ const ResumeAccordion = ({
         >
           <div className="form-grid">
             <label>
-              Application Status*
+              Application Status <span className="required-asterisk">*</span>
               <select
                 value={jobApplication.JobApplicationStatus || 'Pending'}
                 onChange={(event) => updateApplication('JobApplicationStatus', event.target.value)}
@@ -277,7 +312,7 @@ const ResumeAccordion = ({
             </label>
 
             <label>
-              Application Date*
+              Application Date <span className="required-asterisk">*</span>
               <input
                 type="date"
                 value={jobApplication.JobApplicationDate || ''}
@@ -544,7 +579,7 @@ const ResumeAccordion = ({
           <input value={applicant.applicantName} disabled />
         </label>
         <label>
-          Applied Position*
+          Applied Position <span className="required-asterisk">*</span>
           <input
             value={jobApplication.appliedPosition}
             onChange={(event) => updateApplication('appliedPosition', event.target.value)}
@@ -567,10 +602,6 @@ const ResumeAccordion = ({
             onChange={(event) => updateApplication('expectedSalary', event.target.value)}
             placeholder="85000"
           />
-        </label>
-        <label>
-          Resume URL
-          <input value={jobApplication.resumeFileUrl} disabled />
         </label>
       </div>
     </div>
@@ -900,18 +931,6 @@ const ResumeAccordion = ({
             <option value="yes">Yes</option>
             <option value="no">No</option>
           </select>
-        </label>
-
-        <label>
-          Upload Resume (PDF)*
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={(event) => {
-              const file = event.target.files?.[0] ?? null
-              void handleResumeUpload(file)
-            }}
-          />
         </label>
       </div>
 

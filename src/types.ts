@@ -23,6 +23,8 @@ export type JobApplication = {
   references?: ApplicantReference[]
   trainings?: Training[]
   certificates?: Certificate[]
+  agreedToTerms?: boolean
+  dateAgreed?: string
 }
 
 export type Education = {

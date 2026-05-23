@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import './App.scss'
 import ApplicantEditPage from './pages/ApplicantEditPage'
 import EditorPage from './pages/EditorPage'
 import HomePage from './pages/HomePage'
+import NewApplicationModal from './components/modals/NewApplicationModal'
 import Navbar from './components/Navbar'
 import { updateApplication as syncApplication, getResumeSettings, deleteApplication, getApplicationsForApplicant } from './services/applications'
 import { loginUser, registerUser, getApplicantProfile, updateApplicantProfile, type AuthSession } from './services/auth'
@@ -278,8 +279,11 @@ function App() {
   const [authSession, setAuthSession] = useState<AuthSession | null>(storedAuthSession)
   const [authError, setAuthError] = useState('')
   const [isAuthLoading, setIsAuthLoading] = useState(false)
+  const [registrationMessage, setRegistrationMessage] = useState('')
   const storageScope = getStorageScope(authSession?.user.id)
   const [hydratedStorageScope, setHydratedStorageScope] = useState(storageScope)
+  const [showNewAppModal, setShowNewAppModal] = useState(false)
+  const navigate = useNavigate()
 
   const touchActiveApplication = () => {
     setJobApplications((prev) =>
@@ -457,9 +461,10 @@ function App() {
     setAuthError('')
     setIsAuthLoading(true)
     try {
-      const session = await registerUser(name, email, password)
-      setAuthSession(session)
-      setApplicant((prev) => ({ ...prev, applicantId: session.user.id }))
+      // Register but do not auto-login the user; require explicit login
+      await registerUser(name, email, password)
+      setRegistrationMessage('Registration successful. Please sign in to continue.')
+      setAuthSession(null)
 
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Signup failed')
@@ -822,22 +827,29 @@ function App() {
         <Route
           path="/"
           element={
-            <HomePage
-              applicant={applicant}
-              jobApplications={jobApplications}
-              activeJobApplicationId={activeJobApplicationId}
-              resumeTemplate={resumeTemplate}
-              previewFont={previewFont}
-              resumeSettingsMap={resumeSettingsMap}
-              education={education}
-              employmentHistory={employmentHistory}
-              authSession={authSession}
-              isAuthLoading={isAuthLoading}
-              authError={authError}
-              onLogin={handleLogin}
-              onSignup={handleSignup}
-              onAddJobApplication={addJobApplication}
-            />
+            // If logged-in but missing required profile fields, force onboarding
+            authSession && (!applicant.homeAddress || !applicant.phoneNumber || !applicant.citizenshipStatus || !applicant.applicantName || applicant.hasCriminalHistory === null) ? (
+              <Navigate to="/applicant" replace />
+            ) : (
+                <HomePage
+                applicant={applicant}
+                jobApplications={jobApplications}
+                activeJobApplicationId={activeJobApplicationId}
+                resumeTemplate={resumeTemplate}
+                previewFont={previewFont}
+                resumeSettingsMap={resumeSettingsMap}
+                education={education}
+                employmentHistory={employmentHistory}
+                authSession={authSession}
+                isAuthLoading={isAuthLoading}
+                authError={authError}
+                registrationMessage={registrationMessage}
+                onLogin={handleLogin}
+                onSignup={handleSignup}
+                  onAddJobApplication={addJobApplication}
+                onRequestNewApplication={() => setShowNewAppModal(true)}
+              />
+            )
           }
         />
         <Route
@@ -922,6 +934,20 @@ function App() {
           }
         />
       </Routes>
+      {showNewAppModal && (
+        <NewApplicationModal
+          isOpen={showNewAppModal}
+          onClose={() => setShowNewAppModal(false)}
+          onCreate={async ({ appliedPosition, JobApplicationDate, agreesToDrugTest }) => {
+            const next = createEmptyApplication(applicant.applicantId)
+            const nextFilled = { ...next, appliedPosition, JobApplicationDate, agreesToDrugTest }
+            setJobApplications((prev) => [...prev, nextFilled])
+            setActiveJobApplicationId(next.JobApplicationId)
+            setShowNewAppModal(false)
+            navigate(`/editor/${next.JobApplicationId}`)
+          }}
+        />
+      )}
       </main>
     </div>
   )

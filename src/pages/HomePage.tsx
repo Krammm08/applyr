@@ -28,7 +28,9 @@ type HomePageProps = {
   authError: string
   onLogin: (email: string, password: string) => Promise<void>
   onSignup: (name: string, email: string, password: string) => Promise<void>
-  onAddJobApplication: () => string
+  onAddJobApplication: () => string,
+  onRequestNewApplication?: () => Promise<void> | void,
+  registrationMessage?: string,
 }
 
 const formatDate = (value: string) => {
@@ -72,6 +74,8 @@ const HomePage = ({
   onLogin,
   onSignup,
   onAddJobApplication,
+  onRequestNewApplication,
+  registrationMessage,
 }: HomePageProps) => {
   const navigate = useNavigate()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
@@ -150,6 +154,7 @@ const HomePage = ({
               <h2>{mode === 'login' ? 'Sign in to your account' : 'Create your account'}</h2>
               <p>Build your profile once and reuse it for every application.</p>
             </div>
+            {registrationMessage ? <p className="upload-note done">{registrationMessage}</p> : null}
 
             <form className="auth-form" onSubmit={handleSubmit}>
               {mode === 'signup' && (
@@ -206,8 +211,12 @@ const HomePage = ({
             type="button"
             className="primary-button"
             onClick={() => {
-              const nextId = onAddJobApplication()
-              navigate(`/editor/${nextId}`)
+              if (onRequestNewApplication) {
+                void onRequestNewApplication()
+              } else {
+                const nextId = onAddJobApplication()
+                navigate(`/editor/${nextId}`)
+              }
             }}
           >
             + New Application
@@ -224,8 +233,12 @@ const HomePage = ({
               type="button"
               className="primary-button"
               onClick={() => {
-                const nextId = onAddJobApplication()
-                navigate(`/editor/${nextId}`)
+                if (onRequestNewApplication) {
+                  void onRequestNewApplication()
+                } else {
+                  const nextId = onAddJobApplication()
+                  navigate(`/editor/${nextId}`)
+                }
               }}
             >
               + Add application
