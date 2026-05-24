@@ -57,6 +57,7 @@ const createEmptyApplication = (applicantId: string): JobApplication => ({
 const createEducation = (applicantId: string): Education => ({
   educationId: createId(),
   applicantId,
+  schoolId: '',
   schoolName: '',
   schoolLocation: '',
   startYear: '',
@@ -69,6 +70,7 @@ const createEmployment = (applicantId: string): EmploymentHistory => ({
   EmploymentHistoryId: createId(),
   applicantId,
   companyName: '',
+  companyId: '',
   companyAddress: '',
   workPosition: '',
   reasonForLeaving: null,
@@ -231,6 +233,7 @@ function App() {
     .map((entry) => ({
       educationId: entry.educationId || entry.id || createId(),
       applicantId: entry.applicantId || initialApplicant.applicantId,
+      schoolId: entry.schoolId || '',
       schoolName: entry.schoolName || '',
       schoolLocation: entry.schoolLocation || '',
       startYear: entry.startYear || '',
@@ -667,6 +670,7 @@ function App() {
         EmploymentHistoryId: entry.EmploymentHistoryId || entry.id || createId(),
         applicantId: entry.applicantId || nextApplicant.applicantId,
         companyName: entry.companyName || '',
+        companyId: entry.companyId || '',
         companyAddress: entry.companyAddress || '',
         companyPhone: entry.companyPhone || '',
         workPosition: entry.workPosition || '',

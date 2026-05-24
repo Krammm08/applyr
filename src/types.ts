@@ -30,6 +30,7 @@ export type JobApplication = {
 export type Education = {
   educationId: string
   applicantId: string
+  schoolId?: string
   schoolName: string
   schoolLocation: string
   startYear: string
@@ -42,6 +43,7 @@ export type EmploymentHistory = {
   EmploymentHistoryId: string
   applicantId: string
   companyName: string
+  companyId?: string
   companyAddress: string
   workPosition: string
   reasonForLeaving?: string | null

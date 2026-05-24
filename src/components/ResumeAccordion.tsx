@@ -85,6 +85,7 @@ function useStickyState<T>(defaultValue: T[], key: string): [T[], Dispatch<SetSt
 }
 
 import ResumePDF from './ResumePDF';
+import SmartCombobox from './SmartCombobox'
 import { PDFDownloadLink } from '@react-pdf/renderer';
 
 type ResumeAccordionPropsWithSync = ResumeAccordionProps & {
@@ -613,9 +614,14 @@ const ResumeAccordion = ({
         <div className="form-grid">
           <label>
             <p className="required-asterisk">School Name</p>
-            <input
-              value={entry.schoolName}
-              onChange={(event) => updateEducation(index, 'schoolName', event.target.value)}
+            <SmartCombobox
+              fetchUrl="/backend/api/schools/list.php"
+              valueName={entry.schoolName}
+              placeholder="Start typing school..."
+              onChange={({ name, id }) => {
+                updateEducation(index, 'schoolName', name)
+                updateEducation(index, 'schoolId', id || '')
+              }}
             />
           </label>
           <label>
@@ -688,9 +694,14 @@ const ResumeAccordion = ({
         <div className="form-grid">
           <label>
             <p className="required-asterisk">Company Name</p>
-            <input
-              value={entry.companyName}
-              onChange={(event) => updateEmployment(index, 'companyName', event.target.value)}
+            <SmartCombobox
+              fetchUrl="/backend/api/companies/list.php"
+              valueName={entry.companyName}
+              placeholder="Start typing company..."
+              onChange={({ name, id }) => {
+                updateEmployment(index, 'companyName', name)
+                updateEmployment(index, 'companyId', id || '')
+              }}
             />
           </label>
           <label>
