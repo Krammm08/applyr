@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage'
 import NewApplicationModal from './components/modals/NewApplicationModal'
 import Navbar from './components/Navbar'
 import { updateApplication as syncApplication, getResumeSettings, deleteApplication, getApplicationsForApplicant } from './services/applications'
+import { ApplicationPayloadSchema } from './validation/applicationSchema'
 import { loginUser, registerUser, getApplicantProfile, updateApplicantProfile, type AuthSession } from './services/auth'
 import type {
   Applicant,
@@ -58,7 +59,8 @@ const createEducation = (applicantId: string): Education => ({
   applicantId,
   schoolName: '',
   schoolLocation: '',
-  yearsAttended: '',
+  startYear: '',
+  endYear: '',
   degreeReceived: '',
   programName: '',
 })
@@ -69,7 +71,10 @@ const createEmployment = (applicantId: string): EmploymentHistory => ({
   companyName: '',
   workAddress: '',
   workPosition: '',
-  reasonForLeaving: '',
+  reasonForLeaving: null,
+  startDate: '',
+  endDate: '',
+  isEmployed: false,
 })
 
 const createReference = (applicantId: string): ApplicantReference => ({
@@ -88,6 +93,7 @@ const createTraining = (): Training => ({
   trainingDescription: '',
   trainingInstructor: '',
   trainingDurationHours: '',
+  completionDate: '',
 })
 
 const createCertificate = (): Certificate => ({
@@ -95,6 +101,7 @@ const createCertificate = (): Certificate => ({
   certificateName: '',
   issuingAuthority: '',
   validityMonths: '',
+  dateIssued: '',
 })
 
 const moveItem = <T,>(items: T[], fromIndex: number, toIndex: number) => {
@@ -226,7 +233,8 @@ function App() {
       applicantId: entry.applicantId || initialApplicant.applicantId,
       schoolName: entry.schoolName || '',
       schoolLocation: entry.schoolLocation || '',
-      yearsAttended: entry.yearsAttended || '',
+      startYear: entry.startYear || '',
+      endYear: entry.endYear || '',
       degreeReceived: entry.degreeReceived || '',
       programName: entry.programName || '',
     }))
@@ -242,7 +250,10 @@ function App() {
       companyName: entry.companyName || '',
       workAddress: entry.workAddress || '',
       workPosition: entry.workPosition || '',
-      reasonForLeaving: entry.reasonForLeaving || '',
+      reasonForLeaving: entry.reasonForLeaving ?? null,
+      startDate: entry.startDate || '',
+      endDate: entry.endDate || '',
+      isEmployed: entry.isEmployed ?? false,
     }))
 
   const initialResumeSettingsMap = loadScopedValue<Record<string, ApplicationResumeSettings>>(
@@ -560,7 +571,8 @@ function App() {
         applicantId: entry.applicantId || nextApplicant.applicantId,
         schoolName: entry.schoolName || '',
         schoolLocation: entry.schoolLocation || '',
-        yearsAttended: entry.yearsAttended || '',
+        startYear: entry.startYear || '',
+        endYear: entry.endYear || '',
         degreeReceived: entry.degreeReceived || '',
         programName: entry.programName || '',
       })),
@@ -572,7 +584,10 @@ function App() {
         companyName: entry.companyName || '',
         workAddress: entry.workAddress || '',
         workPosition: entry.workPosition || '',
-        reasonForLeaving: entry.reasonForLeaving || '',
+        reasonForLeaving: entry.reasonForLeaving ?? null,
+        startDate: entry.startDate || '',
+        endDate: entry.endDate || '',
+        isEmployed: entry.isEmployed ?? false,
       })),
     )
     setResumeSettingsMap(loadScopedValue<Record<string, ApplicationResumeSettings>>(nextScope, 'resumeSettings', {}))
@@ -783,11 +798,19 @@ function App() {
       employmentHistory,
       trainings: activeJobApplication.trainings || [],
       certificates: activeJobApplication.certificates || [],
+      references: activeJobApplication.references || [],
       resumeSettings: {
         JobApplicationId: activeJobApplicationId,
         resumeTemplate,
         previewFont,
       },
+    }
+
+    try {
+      ApplicationPayloadSchema.parse(payload)
+    } catch (err) {
+      console.warn('Validation failed for payload, aborting sync:', err)
+      return
     }
 
     await syncApplication(payload).catch(console.error)

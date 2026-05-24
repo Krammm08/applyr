@@ -32,7 +32,8 @@ export type Education = {
   applicantId: string
   schoolName: string
   schoolLocation: string
-  yearsAttended: string
+  startYear: string
+  endYear: string
   degreeReceived: string
   programName: string
 }
@@ -43,7 +44,10 @@ export type EmploymentHistory = {
   companyName: string
   workAddress: string
   workPosition: string
-  reasonForLeaving: string
+  reasonForLeaving?: string | null
+  startDate: string
+  endDate: string
+  isEmployed?: boolean
 }
 
 export type ApplicantReference = {
@@ -62,6 +66,7 @@ export type Training = {
   trainingDescription: string
   trainingInstructor: string
   trainingDurationHours: string
+  completionDate?: string
 }
 
 export type Certificate = {
@@ -69,6 +74,7 @@ export type Certificate = {
   certificateName: string
   issuingAuthority: string
   validityMonths: string
+  dateIssued?: string
 }
 
 export type ApplicationResumeSettings = {

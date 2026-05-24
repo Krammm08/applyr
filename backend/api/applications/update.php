@@ -113,53 +113,68 @@ try {
         'dateAgreed' => !empty($jobApplication['dateAgreed']) ? $jobApplication['dateAgreed'] : date('Y-m-d H:i:s'),
     ]);
 
-    // Insert/update education
+    // Insert/update education (find or create School)
     if (isset($input['education']) && is_array($input['education'])) {
-        $stmtSchool = $db->prepare('INSERT INTO School (schoolId, schoolName, schoolLocation) VALUES (:schoolId, :schoolName, :schoolLocation) ON DUPLICATE KEY UPDATE schoolName=VALUES(schoolName), schoolLocation=VALUES(schoolLocation)');
+        $stmtFindSchool = $db->prepare('SELECT schoolId FROM School WHERE schoolName = :name AND schoolLocation = :loc LIMIT 1');
+        $stmtInsertSchool = $db->prepare('INSERT INTO School (schoolId, schoolName, schoolLocation) VALUES (:schoolId, :schoolName, :schoolLocation)');
         $stmtEd = $db->prepare('INSERT INTO Education (educationId, applicantId, schoolId, startYear, endYear, degreeReceived, programName) VALUES (:educationId, :applicantId, :schoolId, :startYear, :endYear, :degreeReceived, :programName) ON DUPLICATE KEY UPDATE schoolId=VALUES(schoolId), startYear=VALUES(startYear), endYear=VALUES(endYear), degreeReceived=VALUES(degreeReceived), programName=VALUES(programName)');
-        
+
         foreach ($input['education'] as $ed) {
-            $schoolId = !empty($ed['schoolId']) ? $ed['schoolId'] : rand(100000, 999999);
-            $stmtSchool->execute([
-                'schoolId' => $schoolId,
-                'schoolName' => $ed['schoolName'] ?? '',
-                'schoolLocation' => $ed['schoolLocation'] ?? ''
-            ]);
-            $edId = !empty($ed['educationId']) ? $ed['educationId'] : rand(100000, 999999);
+            $schoolName = (string)($ed['schoolName'] ?? '');
+            $schoolLocation = (string)($ed['schoolLocation'] ?? '');
+            $stmtFindSchool->execute(['name' => $schoolName, 'loc' => $schoolLocation]);
+            $found = $stmtFindSchool->fetch(PDO::FETCH_ASSOC);
+            if ($found && !empty($found['schoolId'])) {
+                $schoolId = $found['schoolId'];
+            } else {
+                $schoolId = bin2hex(random_bytes(8));
+                $stmtInsertSchool->execute(['schoolId' => $schoolId, 'schoolName' => $schoolName, 'schoolLocation' => $schoolLocation]);
+            }
+
+            $edId = !empty($ed['educationId']) ? $ed['educationId'] : bin2hex(random_bytes(8));
             $stmtEd->execute([
                 'educationId' => $edId,
                 'applicantId' => $applicantId,
                 'schoolId' => $schoolId,
-                'startYear' => $ed['startYear'] ?? date('Y'),
-                'endYear' => $ed['endYear'] ?? date('Y'),
+                'startYear' => $ed['startYear'] ?? null,
+                'endYear' => $ed['endYear'] ?? null,
                 'degreeReceived' => $ed['degreeReceived'] ?? '',
                 'programName' => $ed['programName'] ?? ''
             ]);
         }
     }
 
-    // Insert/update employment history
+    // Insert/update employment history (require startDate and endDate, find-or-create Company)
     if (isset($input['employmentHistory']) && is_array($input['employmentHistory'])) {
-        $stmtCompany = $db->prepare('INSERT INTO Company (companyId, companyName, companyAddress, companyPhone) VALUES (:companyId, :companyName, :companyAddress, :companyPhone) ON DUPLICATE KEY UPDATE companyName=VALUES(companyName), companyAddress=VALUES(companyAddress), companyPhone=VALUES(companyPhone)');
+        $stmtFindCompany = $db->prepare('SELECT companyId FROM Company WHERE companyName = :name AND companyAddress = :addr LIMIT 1');
+        $stmtInsertCompany = $db->prepare('INSERT INTO Company (companyId, companyName, companyAddress, companyPhone) VALUES (:companyId, :companyName, :companyAddress, :companyPhone)');
         $stmtEmp = $db->prepare('INSERT INTO EmploymentHistory (EmploymentHistoryId, applicantId, companyId, workPosition, reasonForLeaving, startDate, endDate, isEmployed) VALUES (:empId, :applicantId, :companyId, :workPosition, :reasonForLeaving, :startDate, :endDate, :isEmployed) ON DUPLICATE KEY UPDATE companyId=VALUES(companyId), workPosition=VALUES(workPosition), reasonForLeaving=VALUES(reasonForLeaving), startDate=VALUES(startDate), endDate=VALUES(endDate), isEmployed=VALUES(isEmployed)');
-        
+
         foreach ($input['employmentHistory'] as $emp) {
-            $companyId = !empty($emp['companyId']) ? $emp['companyId'] : rand(100000, 999999);
-            $stmtCompany->execute([
-                'companyId' => $companyId,
-                'companyName' => $emp['companyName'] ?? '',
-                'companyAddress' => $emp['companyAddress'] ?? '',
-                'companyPhone' => $emp['companyPhone'] ?? ''
-            ]);
-            $empId = !empty($emp['EmploymentHistoryId']) ? $emp['EmploymentHistoryId'] : rand(100000, 999999);
+            if (empty($emp['startDate']) || empty($emp['endDate'])) {
+                jsonResponse(422, ['success' => false, 'message' => 'Each employment entry requires both startDate and endDate.']);
+            }
+
+            $companyName = (string)($emp['companyName'] ?? '');
+            $companyAddr = (string)($emp['companyAddress'] ?? '');
+            $stmtFindCompany->execute(['name' => $companyName, 'addr' => $companyAddr]);
+            $foundC = $stmtFindCompany->fetch(PDO::FETCH_ASSOC);
+            if ($foundC && !empty($foundC['companyId'])) {
+                $companyId = $foundC['companyId'];
+            } else {
+                $companyId = bin2hex(random_bytes(8));
+                $stmtInsertCompany->execute(['companyId' => $companyId, 'companyName' => $companyName, 'companyAddress' => $companyAddr, 'companyPhone' => $emp['companyPhone'] ?? '']);
+            }
+
+            $empId = !empty($emp['EmploymentHistoryId']) ? $emp['EmploymentHistoryId'] : bin2hex(random_bytes(8));
             $stmtEmp->execute([
                 'empId' => $empId,
                 'applicantId' => $applicantId,
                 'companyId' => $companyId,
                 'workPosition' => $emp['workPosition'] ?? '',
                 'reasonForLeaving' => $emp['reasonForLeaving'] ?? null,
-                'startDate' => (!empty($emp['startDate'])) ? $emp['startDate'] : date('Y-m-d'),
-                'endDate' => (!empty($emp['endDate'])) ? $emp['endDate'] : date('Y-m-d'),
+                'startDate' => $emp['startDate'],
+                'endDate' => $emp['endDate'],
                 'isEmployed' => (int)($emp['isEmployed'] ?? 0)
             ]);
         }
@@ -224,6 +239,23 @@ try {
             'resumeTemplate' => (string)($resumeSettings['resumeTemplate'] ?? 'classic'),
             'previewFont' => (string)($resumeSettings['previewFont'] ?? 'Helvetica'),
         ]);
+    }
+
+    // Insert/update References
+    if (isset($input['references']) && is_array($input['references'])) {
+        $stmtRef = $db->prepare('INSERT INTO Reference (referenceId, JobApplicationId, referenceName, referenceTitle, referenceCompany, referencePhone, referenceEmail) VALUES (:referenceId, :jobApplicationId, :referenceName, :referenceTitle, :referenceCompany, :referencePhone, :referenceEmail) ON DUPLICATE KEY UPDATE referenceName=VALUES(referenceName), referenceTitle=VALUES(referenceTitle), referenceCompany=VALUES(referenceCompany), referencePhone=VALUES(referencePhone), referenceEmail=VALUES(referenceEmail), JobApplicationId=VALUES(JobApplicationId)');
+        foreach ($input['references'] as $ref) {
+            $refId = !empty($ref['referenceId']) ? $ref['referenceId'] : bin2hex(random_bytes(8));
+            $stmtRef->execute([
+                'referenceId' => $refId,
+                'jobApplicationId' => $jobApplicationId,
+                'referenceName' => $ref['referenceName'] ?? '',
+                'referenceTitle' => $ref['referenceTitle'] ?? '',
+                'referenceCompany' => $ref['referenceCompany'] ?? '',
+                'referencePhone' => $ref['referencePhone'] ?? '',
+                'referenceEmail' => $ref['referenceEmail'] ?? ''
+            ]);
+        }
     }
 
     $db->commit();

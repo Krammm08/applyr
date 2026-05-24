@@ -609,7 +609,7 @@ const ResumeAccordion = ({
 
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Education ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.schoolName !== '' && entry.degreeReceived !== '' && entry.schoolLocation !== '' && entry.yearsAttended !== '')}
+        {renderEditorHeader(`Education ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.schoolName !== '' && entry.degreeReceived !== '' && entry.schoolLocation !== '' && entry.startYear !== '' && entry.endYear !== '')}
         <div className="form-grid">
           <label>
             <p className="required-asterisk">School Name</p>
@@ -626,11 +626,25 @@ const ResumeAccordion = ({
             />
           </label>
           <label>
-            <p className="required-asterisk">Years Attended</p>
+            <p className="required-asterisk">Start Year</p>
             <input
-              value={entry.yearsAttended}
-              onChange={(event) => updateEducation(index, 'yearsAttended', event.target.value)}
-              placeholder="2019 - 2023"
+              type="number"
+              min={1900}
+              max={2100}
+              value={entry.startYear}
+              onChange={(event) => updateEducation(index, 'startYear', event.target.value)}
+              placeholder="2019"
+            />
+          </label>
+          <label>
+            <p className="required-asterisk">End Year</p>
+            <input
+              type="number"
+              min={1900}
+              max={2100}
+              value={entry.endYear}
+              onChange={(event) => updateEducation(index, 'endYear', event.target.value)}
+              placeholder="2023"
             />
           </label>
           <label>
@@ -670,7 +684,7 @@ const ResumeAccordion = ({
 
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Employment ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.companyName !== '' && entry.workPosition !== '' && entry.workAddress !== '' && entry.reasonForLeaving !== '')}
+        {renderEditorHeader(`Employment ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.companyName !== '' && entry.workPosition !== '' && entry.workAddress !== '' && entry.startDate !== '' && entry.endDate !== '')}
         <div className="form-grid">
           <label>
             <p className="required-asterisk">Company Name</p>
@@ -694,10 +708,26 @@ const ResumeAccordion = ({
             />
           </label>
           <label>
-            <p className="required-asterisk">Reason For Leaving</p>
+            <p className="required-asterisk">Reason For Leaving (optional)</p>
             <input
-              value={entry.reasonForLeaving}
+              value={entry.reasonForLeaving ?? ''}
               onChange={(event) => updateEmployment(index, 'reasonForLeaving', event.target.value)}
+            />
+          </label>
+          <label>
+            <p className="required-asterisk">Start Date</p>
+            <input
+              type="date"
+              value={entry.startDate}
+              onChange={(event) => updateEmployment(index, 'startDate', event.target.value)}
+            />
+          </label>
+          <label>
+            <p className="required-asterisk">End Date</p>
+            <input
+              type="date"
+              value={entry.endDate}
+              onChange={(event) => updateEmployment(index, 'endDate', event.target.value)}
             />
           </label>
         </div>
@@ -784,7 +814,7 @@ const ResumeAccordion = ({
 
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Training ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.trainingTitle !== '' && entry.trainingDescription !== '' && entry.trainingInstructor !== '' && entry.trainingDurationHours !== '')}
+        {renderEditorHeader(`Training ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.trainingTitle !== '' && entry.trainingInstructor !== '' && entry.trainingDurationHours !== '' && entry.completionDate !== '')}
         <div className="form-grid">
           <label>
             <p className="required-asterisk">Title</p>
@@ -815,6 +845,14 @@ const ResumeAccordion = ({
               onChange={(event) => updateTraining(index, 'trainingDurationHours', event.target.value)}
             />
           </label>
+          <label>
+            <p className="required-asterisk">Completion Date</p>
+            <input
+              type="date"
+              value={entry.completionDate ?? ''}
+              onChange={(event) => updateTraining(index, 'completionDate', event.target.value)}
+            />
+          </label>
         </div>
         <button
           type="button"
@@ -838,7 +876,7 @@ const ResumeAccordion = ({
 
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Certificate ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.certificateName !== '' && entry.issuingAuthority !== '' && entry.validityMonths !== '')}
+        {renderEditorHeader(`Certificate ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.certificateName !== '' && entry.issuingAuthority !== '' && entry.validityMonths !== '' && entry.dateIssued !== '')}
         <div className="form-grid">
           <label>
             <p className="required-asterisk">Name</p>
@@ -860,6 +898,14 @@ const ResumeAccordion = ({
               type="number"
               value={entry.validityMonths}
               onChange={(event) => updateCertificate(index, 'validityMonths', event.target.value)}
+            />
+          </label>
+          <label>
+            <p className="required-asterisk">Date Issued</p>
+            <input
+              type="date"
+              value={entry.dateIssued ?? ''}
+              onChange={(event) => updateCertificate(index, 'dateIssued', event.target.value)}
             />
           </label>
         </div>

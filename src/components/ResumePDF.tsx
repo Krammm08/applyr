@@ -256,7 +256,7 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                         <View key={idx} style={styles.lineBlock} wrap={false}>
                           <View style={styles.lineFlex}>
                             <Text style={styles.bold}>{entry.degreeReceived ? entry.degreeReceived : "Degree - "}</Text>
-                            <Text>{entry.yearsAttended}</Text>
+                            <Text>{entry.startYear || entry.endYear ? `${entry.startYear || ''}${entry.startYear && entry.endYear ? ' - ' : ''}${entry.endYear || ''}` : 'Not provided'}</Text>
                           </View>
                           <View style={styles.lineFlex}>
                             <Text style={styles.italic}>{entry.schoolName ? entry.schoolName : "School - "}</Text>
@@ -288,6 +288,10 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                             <Text style={styles.italic}>{entry.companyName}</Text>
                             <Text>{entry.workAddress}</Text>
                           </View>
+                          <View style={styles.lineFlex}>
+                            <Text style={styles.italic}>Start: {entry.startDate || 'N/A'}</Text>
+                            <Text>End: {entry.endDate || 'N/A'}</Text>
+                          </View>
                         </View>
                       ))}
                     </View>
@@ -314,6 +318,9 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                             <Text style={styles.italic}>{getDisplayValue(entry.trainingInstructor, "Instructor")}</Text>
                             <Text>{getDisplayValue(entry.trainingDescription, "Description")}</Text>
                           </View>
+                          <View style={styles.lineFlex}>
+                            <Text style={styles.italic}>Completed: {entry.completionDate || 'N/A'}</Text>
+                          </View>
                         </View>
                       ))}
                     </View>
@@ -338,6 +345,9 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                           </View>
                           <View style={styles.lineFlex}>
                             <Text style={styles.italic}>{getDisplayValue(entry.issuingAuthority, "Authority")}</Text>
+                          </View>
+                          <View style={styles.lineFlex}>
+                            <Text>Date Issued: {entry.dateIssued || 'N/A'}</Text>
                           </View>
                         </View>
                       ))}

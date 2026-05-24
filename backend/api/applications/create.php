@@ -87,6 +87,141 @@ try {
         'previewFont' => (string)($input['resumeSettings']['previewFont'] ?? 'Helvetica'),
     ]);
 
+    // --- Education: find or create School and insert Education rows ---
+    if (isset($input['education']) && is_array($input['education'])) {
+        $stmtFindSchool = $db->prepare('SELECT schoolId FROM School WHERE schoolName = :name AND schoolLocation = :loc LIMIT 1');
+        $stmtInsertSchool = $db->prepare('INSERT INTO School (schoolId, schoolName, schoolLocation) VALUES (:schoolId, :schoolName, :schoolLocation)');
+        $stmtEd = $db->prepare('INSERT INTO Education (educationId, applicantId, schoolId, startYear, endYear, degreeReceived, programName) VALUES (:educationId, :applicantId, :schoolId, :startYear, :endYear, :degreeReceived, :programName)');
+
+        foreach ($input['education'] as $ed) {
+            $schoolName = (string)($ed['schoolName'] ?? '');
+            $schoolLocation = (string)($ed['schoolLocation'] ?? '');
+
+            $stmtFindSchool->execute(['name' => $schoolName, 'loc' => $schoolLocation]);
+            $found = $stmtFindSchool->fetch(PDO::FETCH_ASSOC);
+            if ($found && !empty($found['schoolId'])) {
+                $schoolId = $found['schoolId'];
+            } else {
+                $schoolId = bin2hex(random_bytes(8));
+                $stmtInsertSchool->execute(['schoolId' => $schoolId, 'schoolName' => $schoolName, 'schoolLocation' => $schoolLocation]);
+            }
+
+            $educationId = !empty($ed['educationId']) ? $ed['educationId'] : bin2hex(random_bytes(8));
+            $stmtEd->execute([
+                'educationId' => $educationId,
+                'applicantId' => $applicantId,
+                'schoolId' => $schoolId,
+                'startYear' => $ed['startYear'] ?? null,
+                'endYear' => $ed['endYear'] ?? null,
+                'degreeReceived' => $ed['degreeReceived'] ?? '',
+                'programName' => $ed['programName'] ?? ''
+            ]);
+        }
+    }
+
+    // --- Employment: require startDate and endDate; find-or-create Company ---
+    if (isset($input['employmentHistory']) && is_array($input['employmentHistory'])) {
+        $stmtFindCompany = $db->prepare('SELECT companyId FROM Company WHERE companyName = :name AND companyAddress = :addr LIMIT 1');
+        $stmtInsertCompany = $db->prepare('INSERT INTO Company (companyId, companyName, companyAddress, companyPhone) VALUES (:companyId, :companyName, :companyAddress, :companyPhone)');
+        $stmtEmp = $db->prepare('INSERT INTO EmploymentHistory (EmploymentHistoryId, applicantId, companyId, workPosition, reasonForLeaving, startDate, endDate, isEmployed) VALUES (:empId, :applicantId, :companyId, :workPosition, :reasonForLeaving, :startDate, :endDate, :isEmployed)');
+
+        foreach ($input['employmentHistory'] as $emp) {
+            if (empty($emp['startDate']) || empty($emp['endDate'])) {
+                jsonResponse(422, ['success' => false, 'message' => 'Each employment entry requires both startDate and endDate.']);
+            }
+
+            $companyName = (string)($emp['companyName'] ?? '');
+            $companyAddr = (string)($emp['companyAddress'] ?? '');
+
+            $stmtFindCompany->execute(['name' => $companyName, 'addr' => $companyAddr]);
+            $foundC = $stmtFindCompany->fetch(PDO::FETCH_ASSOC);
+            if ($foundC && !empty($foundC['companyId'])) {
+                $companyId = $foundC['companyId'];
+            } else {
+                $companyId = bin2hex(random_bytes(8));
+                $stmtInsertCompany->execute(['companyId' => $companyId, 'companyName' => $companyName, 'companyAddress' => $companyAddr, 'companyPhone' => $emp['companyPhone'] ?? '']);
+            }
+
+            $empId = !empty($emp['EmploymentHistoryId']) ? $emp['EmploymentHistoryId'] : bin2hex(random_bytes(8));
+            $stmtEmp->execute([
+                'empId' => $empId,
+                'applicantId' => $applicantId,
+                'companyId' => $companyId,
+                'workPosition' => $emp['workPosition'] ?? '',
+                'reasonForLeaving' => $emp['reasonForLeaving'] ?? null,
+                'startDate' => $emp['startDate'],
+                'endDate' => $emp['endDate'],
+                'isEmployed' => (int)($emp['isEmployed'] ?? 0)
+            ]);
+        }
+    }
+
+    // --- Certificates: require dateIssued and map to ApplicantCertificate ---
+    if (isset($input['certificates']) && is_array($input['certificates'])) {
+        $stmtCert = $db->prepare('INSERT INTO Certificate (certificateId, certificateName, issuingAuthority, validityMonths) VALUES (:certId, :certName, :authority, :validity) ON DUPLICATE KEY UPDATE certificateName=VALUES(certificateName), issuingAuthority=VALUES(issuingAuthority), validityMonths=VALUES(validityMonths)');
+        $stmtAppCert = $db->prepare('INSERT INTO ApplicantCertificate (applicantId, certificateId, dateIssued) VALUES (:applicantId, :certId, :dateIssued)');
+
+        foreach ($input['certificates'] as $cert) {
+            if (empty($cert['dateIssued'])) {
+                jsonResponse(422, ['success' => false, 'message' => 'Each certificate requires a dateIssued.']);
+            }
+            $certId = !empty($cert['certificateId']) ? $cert['certificateId'] : bin2hex(random_bytes(8));
+            $stmtCert->execute([
+                'certId' => $certId,
+                'certName' => $cert['certificateName'] ?? '',
+                'authority' => $cert['issuingAuthority'] ?? '',
+                'validity' => $cert['validityMonths'] ?? 0
+            ]);
+            $stmtAppCert->execute([
+                'applicantId' => $applicantId,
+                'certId' => $certId,
+                'dateIssued' => $cert['dateIssued']
+            ]);
+        }
+    }
+
+    // --- Trainings: require completionDate and map to ApplicantTraining ---
+    if (isset($input['trainings']) && is_array($input['trainings'])) {
+        $stmtTrain = $db->prepare('INSERT INTO Training (trainingId, trainingTitle, trainingDescription, trainingInstructor, trainingDurationHours) VALUES (:trainId, :title, :desc, :instructor, :duration) ON DUPLICATE KEY UPDATE trainingTitle=VALUES(trainingTitle), trainingDescription=VALUES(trainingDescription), trainingInstructor=VALUES(trainingInstructor), trainingDurationHours=VALUES(trainingDurationHours)');
+        $stmtAppTrain = $db->prepare('INSERT INTO ApplicantTraining (applicantId, trainingId, completionDate) VALUES (:applicantId, :trainId, :completionDate)');
+
+        foreach ($input['trainings'] as $train) {
+            if (empty($train['completionDate'])) {
+                jsonResponse(422, ['success' => false, 'message' => 'Each training requires a completionDate.']);
+            }
+            $trainId = !empty($train['trainingId']) ? $train['trainingId'] : bin2hex(random_bytes(8));
+            $stmtTrain->execute([
+                'trainId' => $trainId,
+                'title' => $train['trainingTitle'] ?? '',
+                'desc' => $train['trainingDescription'] ?? '',
+                'instructor' => $train['trainingInstructor'] ?? '',
+                'duration' => $train['trainingDurationHours'] ?? 0
+            ]);
+            $stmtAppTrain->execute([
+                'applicantId' => $applicantId,
+                'trainId' => $trainId,
+                'completionDate' => $train['completionDate']
+            ]);
+        }
+    }
+
+    // --- References: associate references with applicantId ---
+    if (isset($input['references']) && is_array($input['references'])) {
+        $stmtRef = $db->prepare('INSERT INTO Reference (referenceId, JobApplicationId, referenceName, referenceTitle, referenceCompany, referencePhone, referenceEmail) VALUES (:referenceId, :jobApplicationId, :referenceName, :referenceTitle, :referenceCompany, :referencePhone, :referenceEmail)');
+        foreach ($input['references'] as $ref) {
+            $refId = !empty($ref['referenceId']) ? $ref['referenceId'] : bin2hex(random_bytes(8));
+            $stmtRef->execute([
+                'referenceId' => $refId,
+                'jobApplicationId' => $jobApplicationId,
+                'referenceName' => $ref['referenceName'] ?? '',
+                'referenceTitle' => $ref['referenceTitle'] ?? '',
+                'referenceCompany' => $ref['referenceCompany'] ?? '',
+                'referencePhone' => $ref['referencePhone'] ?? '',
+                'referenceEmail' => $ref['referenceEmail'] ?? ''
+            ]);
+        }
+    }
+
     $db->commit();
 
     jsonResponse(201, [
