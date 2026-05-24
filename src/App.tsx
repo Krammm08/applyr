@@ -892,7 +892,7 @@ function App() {
         previewFont,
       },
     }
-
+      console.log('syncPayload:', payload)
     try {
       ApplicationPayloadSchema.parse(payload)
     } catch (err) {

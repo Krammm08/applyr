@@ -20,6 +20,26 @@ const NullableBooleanSchema = z.preprocess((value) => {
   return value
 }, z.boolean().nullable())
 
+const CoerceBooleanSchema = z.preprocess((value) => {
+  if (value === '' || value === undefined) {
+    return undefined
+  }
+
+  if (value === true || value === false) {
+    return value
+  }
+
+  if (value === 1 || value === '1' || value === 'true') {
+    return true
+  }
+
+  if (value === 0 || value === '0' || value === 'false') {
+    return false
+  }
+
+  return value
+}, z.boolean())
+
 const DraftDateSchema = z.preprocess((value) => {
   if (value === '' || value === undefined) {
     return null
@@ -99,7 +119,7 @@ export const JobApplicationSchema = z.object({
   availableStartDate: z.string().optional().nullable(),
   expectedSalary: z.union([z.string(), z.number()]).optional().nullable(),
   agreesToDrugTest: z.boolean().optional(),
-  agreedToTerms: z.boolean().optional(),
+  agreedToTerms: CoerceBooleanSchema.optional(),
   dateAgreed: z.string().optional(),
 })
 
