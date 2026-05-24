@@ -42,9 +42,10 @@ export type EmploymentHistory = {
   EmploymentHistoryId: string
   applicantId: string
   companyName: string
-  workAddress: string
+  companyAddress: string
   workPosition: string
   reasonForLeaving?: string | null
+  companyPhone?: string | null
   startDate: string
   endDate: string
   isEmployed?: boolean

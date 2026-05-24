@@ -69,7 +69,7 @@ const createEmployment = (applicantId: string): EmploymentHistory => ({
   EmploymentHistoryId: createId(),
   applicantId,
   companyName: '',
-  workAddress: '',
+  companyAddress: '',
   workPosition: '',
   reasonForLeaving: null,
   startDate: '',
@@ -248,7 +248,8 @@ function App() {
       EmploymentHistoryId: entry.EmploymentHistoryId || entry.id || createId(),
       applicantId: entry.applicantId || initialApplicant.applicantId,
       companyName: entry.companyName || '',
-      workAddress: entry.workAddress || '',
+      companyAddress: entry.companyAddress || '',
+      companyPhone: entry.companyPhone || '',
       workPosition: entry.workPosition || '',
       reasonForLeaving: entry.reasonForLeaving ?? null,
       startDate: entry.startDate || '',
@@ -475,14 +476,15 @@ function App() {
       .map((item) => ({
         ...item,
         companyName: item.companyName.trim(),
-        workAddress: item.workAddress.trim(),
+        companyAddress: (item.companyAddress || '').trim(),
+        companyPhone: (item.companyPhone || '').trim(),
         workPosition: item.workPosition.trim(),
         reasonForLeaving: typeof item.reasonForLeaving === 'string' ? item.reasonForLeaving.trim() : item.reasonForLeaving,
         startDate: trimValue(item.startDate) as string,
         endDate: trimValue(item.endDate) as string,
       }))
       .filter((item) =>
-        [item.companyName, item.workAddress, item.workPosition, item.reasonForLeaving, item.startDate, item.endDate].some(
+        [item.companyName, item.companyAddress, item.companyPhone, item.workPosition, item.reasonForLeaving, item.startDate, item.endDate].some(
           (value) => !isBlank(value),
         ),
       )
@@ -665,7 +667,8 @@ function App() {
         EmploymentHistoryId: entry.EmploymentHistoryId || entry.id || createId(),
         applicantId: entry.applicantId || nextApplicant.applicantId,
         companyName: entry.companyName || '',
-        workAddress: entry.workAddress || '',
+        companyAddress: entry.companyAddress || '',
+        companyPhone: entry.companyPhone || '',
         workPosition: entry.workPosition || '',
         reasonForLeaving: entry.reasonForLeaving ?? null,
         startDate: entry.startDate || '',

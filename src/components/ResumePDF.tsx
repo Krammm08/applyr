@@ -286,7 +286,10 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                           </View>
                           <View style={styles.lineFlex}>
                             <Text style={styles.italic}>{entry.companyName}</Text>
-                            <Text>{entry.workAddress}</Text>
+                            <Text>{entry.companyAddress}</Text>
+                          </View>
+                          <View style={styles.lineFlex}>
+                            <Text style={styles.italic}>Phone: {entry.companyPhone || 'N/A'}</Text>
                           </View>
                           <View style={styles.lineFlex}>
                             <Text style={styles.italic}>Start: {entry.startDate || 'N/A'}</Text>

@@ -684,7 +684,7 @@ const ResumeAccordion = ({
 
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Employment ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.companyName !== '' && entry.workPosition !== '' && entry.workAddress !== '' && entry.startDate !== '' && entry.endDate !== '')}
+        {renderEditorHeader(`Employment ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.companyName !== '' && entry.workPosition !== '' && entry.companyAddress !== '' && entry.startDate !== '' && entry.endDate !== '')}
         <div className="form-grid">
           <label>
             <p className="required-asterisk">Company Name</p>
@@ -694,10 +694,17 @@ const ResumeAccordion = ({
             />
           </label>
           <label>
-            <p className="required-asterisk">Work Address</p>
+            <p className="required-asterisk">Company Address</p>
             <input
-              value={entry.workAddress}
-              onChange={(event) => updateEmployment(index, 'workAddress', event.target.value)}
+              value={entry.companyAddress}
+              onChange={(event) => updateEmployment(index, 'companyAddress', event.target.value)}
+            />
+          </label>
+          <label>
+            <p>Company Phone</p>
+            <input
+              value={entry.companyPhone ?? ''}
+              onChange={(event) => updateEmployment(index, 'companyPhone', event.target.value)}
             />
           </label>
           <label>
