@@ -87,19 +87,23 @@ export const EmploymentSchema = z.object({
 })
 
 export const TrainingSchema = z.object({
-  trainingId: z.string().optional(),
+  trainingId: z.string().nullable().optional(),
   trainingTitle: z.string().min(1),
-  trainingDescription: z.string().optional().nullable(),
-  trainingInstructor: z.string().optional().nullable(),
-  trainingDurationHours: z.union([z.string(), z.number()]).optional(),
+  trainingDescription: z.string().min(1),
+  trainingInstructor: z.string().min(1),
+  trainingDurationHours: z.union([z.string(), z.number()]).pipe(
+    z.coerce.number().min(0, { message: 'Duration must be a positive number' })
+  ),
   completionDate: DraftDateSchema,
 })
 
 export const CertificateSchema = z.object({
-  certificateId: z.string().optional(),
+  certificateId: z.string().nullable().optional(),
   certificateName: z.string().min(1),
   issuingAuthority: z.string().min(1),
-  validityMonths: z.union([z.string(), z.number()]).optional(),
+  validityMonths: z.union([z.string(), z.number()]).pipe(
+    z.coerce.number().min(1, { message: 'Validity must be at least 1 month' })
+  ),
   dateIssued: DraftDateSchema,
 })
 

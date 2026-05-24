@@ -844,9 +844,21 @@ const ResumeAccordion = ({
         <div className="form-grid">
           <label>
             <p className="required-asterisk">Title</p>
-            <input
-              value={entry.trainingTitle}
-              onChange={(event) => updateTraining(index, 'trainingTitle', event.target.value)}
+            <SmartCombobox
+              fetchUrl="/backend/api/trainings/list.php"
+              valueName={entry.trainingTitle}
+              valueId={entry.trainingId ?? null}
+              placeholder="Start typing training..."
+              onChange={({ name, id, description, duration }) => {
+                updateTraining(index, 'trainingTitle', name)
+                updateTraining(index, 'trainingId', id || '')
+                if (description !== undefined && description !== null) {
+                  updateTraining(index, 'trainingDescription', String(description))
+                }
+                if (duration !== undefined && duration !== null) {
+                  updateTraining(index, 'trainingDurationHours', String(duration))
+                }
+              }}
             />
           </label>
           <label>
@@ -906,9 +918,21 @@ const ResumeAccordion = ({
         <div className="form-grid">
           <label>
             <p className="required-asterisk">Name</p>
-            <input
-              value={entry.certificateName}
-              onChange={(event) => updateCertificate(index, 'certificateName', event.target.value)}
+            <SmartCombobox
+              fetchUrl="/backend/api/certificates/list.php"
+              valueName={entry.certificateName}
+              valueId={entry.certificateId ?? null}
+              placeholder="Start typing certificate..."
+              onChange={({ name, id, location, validityMonths }) => {
+                updateCertificate(index, 'certificateName', name)
+                updateCertificate(index, 'certificateId', id || '')
+                if (location !== undefined && location !== null) {
+                  updateCertificate(index, 'issuingAuthority', String(location))
+                }
+                if (validityMonths !== undefined && validityMonths !== null) {
+                  updateCertificate(index, 'validityMonths', String(validityMonths))
+                }
+              }}
             />
           </label>
           <label>

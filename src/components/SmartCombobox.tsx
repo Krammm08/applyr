@@ -1,13 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-type Option = { id: string; name: string; location?: string }
+type ExtraFields = {
+  location?: string | null
+  duration?: number | string | null
+  description?: string | null
+  validityMonths?: number | string | null
+  [key: string]: string | number | null | undefined
+}
+
+type Option = { id: string; name: string } & ExtraFields
 
 type Props = {
   fetchUrl: string
   valueName: string
   valueId?: string | null
   placeholder?: string
-  onChange: (payload: { name: string; id: string | null; location?: string | null }) => void
+  onChange: (payload: { name: string; id: string | null } & ExtraFields) => void
 }
 
 export default function SmartCombobox({ fetchUrl, valueName, valueId, placeholder, onChange }: Props) {
@@ -57,9 +65,40 @@ export default function SmartCombobox({ fetchUrl, valueName, valueId, placeholde
         if (!res.ok) return
         const raw = await res.json()
         // Normalize incoming items
-        type ReceivedItem = { id?: string; companyId?: string; schoolId?: string; name?: string; companyName?: string; schoolName?: string; location?: string; companyAddress?: string; schoolLocation?: string }
+        type ReceivedItem = { 
+          id?: string
+          certificateId?: string
+          trainingId?: string
+          companyId?: string
+          schoolId?: string
+          name?: string
+          certificateName?: string
+          trainingTitle?: string
+          companyName?: string
+          schoolName?: string
+          location?: string
+          companyAddress?: string
+          schoolLocation?: string
+          description?: string
+          duration?: number
+          validityMonths?: number
+        }
         const list: ReceivedItem[] = Array.isArray(raw) ? raw : raw?.data ?? []
-        const mapped = list.map((item) => ({ id: String(item.id || item.companyId || item.schoolId), name: String(item.name || item.companyName || item.schoolName), location: item.location || item.companyAddress || item.schoolLocation || '' }))
+        const mapped = list.map((item) => {
+          const id = String(item.id || item.companyId || item.schoolId || item.certificateId || item.trainingId || '')
+          const name = String(item.name || item.companyName || item.schoolName || item.certificateName || item.trainingTitle || '')
+          const base = { id, name, location: item.location || item.companyAddress || item.schoolLocation || '' }
+          // include any other fields (duration, validity, description, etc.)
+          const extras = { ...item }
+          delete extras.id
+          delete extras.name
+          delete extras.location
+          delete extras.certificateId
+          delete extras.trainingId
+          delete extras.companyId
+          delete extras.schoolId
+          return { ...base, ...extras }
+        })
         if (!cancelled) {
           setOptions(mapped)
           if (typeof window !== 'undefined') {
@@ -107,7 +146,7 @@ export default function SmartCombobox({ fetchUrl, valueName, valueId, placeholde
     selectionCommittedRef.current = true
     setInput(opt.name)
     setIsOpen(false)
-    onChange({ name: opt.name, id: opt.id, location: opt.location || null })
+    onChange({ ...opt })
   }
 
   const onBlur = () => {
@@ -120,9 +159,9 @@ export default function SmartCombobox({ fetchUrl, valueName, valueId, placeholde
       setIsOpen(false)
       const exact = options.find((o) => o.name.toLowerCase() === (input || '').trim().toLowerCase())
       if (exact) {
-        onChange({ name: exact.name, id: exact.id, location: exact.location || null })
+        onChange({ ...exact })
       } else {
-        onChange({ name: (input || '').trim(), id: null, location: null })
+        onChange({ name: (input || '').trim(), id: null })
       }
     }, 150)
   }

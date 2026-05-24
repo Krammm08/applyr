@@ -67,6 +67,7 @@ CREATE TABLE `ApplicantTraining` (
   `applicantId` varchar(50) NOT NULL,
   `trainingId` varchar(50) NOT NULL,
   `completionDate` date NOT NULL,
+  `trainingInstructor` varchar(80) DEFAULT NULL,
   PRIMARY KEY (`trainingId`,`applicantId`),
   KEY `fk_ApplicantTraining_2_idx` (`trainingId`),
   KEY `fk_ApplicantTraining_1_idx` (`applicantId`),
@@ -104,7 +105,8 @@ CREATE TABLE `Certificate` (
   `certificateName` varchar(80) NOT NULL,
   `issuingAuthority` varchar(80) NOT NULL,
   `validityMonths` int(2) NOT NULL,
-  PRIMARY KEY (`certificateId`)
+  PRIMARY KEY (`certificateId`),
+  UNIQUE KEY `certificateName_authority` (`certificateName`,`issuingAuthority`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -245,9 +247,9 @@ CREATE TABLE `Training` (
   `trainingId` varchar(50) NOT NULL,
   `trainingTitle` varchar(80) NOT NULL,
   `trainingDescription` varchar(255) NOT NULL,
-  `trainingInstructor` varchar(80) NOT NULL,
   `trainingDurationHours` int(3) NOT NULL,
-  PRIMARY KEY (`trainingId`)
+  PRIMARY KEY (`trainingId`),
+  UNIQUE KEY `trainingTitle` (`trainingTitle`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

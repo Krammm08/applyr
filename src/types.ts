@@ -67,8 +67,8 @@ export type Training = {
   trainingId: string
   trainingTitle: string
   trainingDescription: string
-  trainingInstructor: string
   trainingDurationHours: string
+  trainingInstructor: string
   completionDate?: string
 }
 

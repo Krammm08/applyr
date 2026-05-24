@@ -158,18 +158,35 @@ try {
 
     // --- Certificates: require dateIssued and map to ApplicantCertificate ---
     if (isset($input['certificates']) && is_array($input['certificates'])) {
+        $stmtFindCert = $db->prepare('SELECT certificateId FROM Certificate WHERE certificateName = :name AND issuingAuthority = :authority LIMIT 1');
         $stmtCert = $db->prepare('INSERT INTO Certificate (certificateId, certificateName, issuingAuthority, validityMonths) VALUES (:certId, :certName, :authority, :validity) ON DUPLICATE KEY UPDATE certificateName=VALUES(certificateName), issuingAuthority=VALUES(issuingAuthority), validityMonths=VALUES(validityMonths)');
-        $stmtAppCert = $db->prepare('INSERT INTO ApplicantCertificate (applicantId, certificateId, dateIssued) VALUES (:applicantId, :certId, :dateIssued)');
+        $stmtAppCert = $db->prepare('INSERT INTO ApplicantCertificate (applicantId, certificateId, dateIssued) VALUES (:applicantId, :certId, :dateIssued) ON DUPLICATE KEY UPDATE dateIssued=VALUES(dateIssued)');
 
         foreach ($input['certificates'] as $cert) {
             if (empty($cert['dateIssued'])) {
                 jsonResponse(422, ['success' => false, 'message' => 'Each certificate requires a dateIssued.']);
             }
-            $certId = !empty($cert['certificateId']) ? $cert['certificateId'] : bin2hex(random_bytes(8));
+
+            $certName = (string)($cert['certificateName'] ?? '');
+            $authority = (string)($cert['issuingAuthority'] ?? '');
+            $certId = !empty($cert['certificateId']) ? (string)$cert['certificateId'] : '';
+
+            if ($certId === '') {
+                $stmtFindCert->execute(['name' => $certName, 'authority' => $authority]);
+                $foundCert = $stmtFindCert->fetch(PDO::FETCH_ASSOC);
+                if ($foundCert && !empty($foundCert['certificateId'])) {
+                    $certId = (string)$foundCert['certificateId'];
+                }
+            }
+
+            if ($certId === '') {
+                $certId = bin2hex(random_bytes(8));
+            }
+
             $stmtCert->execute([
                 'certId' => $certId,
-                'certName' => $cert['certificateName'] ?? '',
-                'authority' => $cert['issuingAuthority'] ?? '',
+                'certName' => $certName,
+                'authority' => $authority,
                 'validity' => $cert['validityMonths'] ?? 0
             ]);
             $stmtAppCert->execute([
@@ -182,25 +199,41 @@ try {
 
     // --- Trainings: require completionDate and map to ApplicantTraining ---
     if (isset($input['trainings']) && is_array($input['trainings'])) {
-        $stmtTrain = $db->prepare('INSERT INTO Training (trainingId, trainingTitle, trainingDescription, trainingInstructor, trainingDurationHours) VALUES (:trainId, :title, :desc, :instructor, :duration) ON DUPLICATE KEY UPDATE trainingTitle=VALUES(trainingTitle), trainingDescription=VALUES(trainingDescription), trainingInstructor=VALUES(trainingInstructor), trainingDurationHours=VALUES(trainingDurationHours)');
-        $stmtAppTrain = $db->prepare('INSERT INTO ApplicantTraining (applicantId, trainingId, completionDate) VALUES (:applicantId, :trainId, :completionDate)');
+        $stmtFindTrain = $db->prepare('SELECT trainingId FROM Training WHERE trainingTitle = :title LIMIT 1');
+        $stmtTrain = $db->prepare('INSERT INTO Training (trainingId, trainingTitle, trainingDescription, trainingDurationHours) VALUES (:trainId, :title, :desc, :duration) ON DUPLICATE KEY UPDATE trainingTitle=VALUES(trainingTitle), trainingDescription=VALUES(trainingDescription), trainingDurationHours=VALUES(trainingDurationHours)');
+        $stmtAppTrain = $db->prepare('INSERT INTO ApplicantTraining (applicantId, trainingId, completionDate, trainingInstructor) VALUES (:applicantId, :trainId, :completionDate, :instructor) ON DUPLICATE KEY UPDATE completionDate=VALUES(completionDate), trainingInstructor=VALUES(trainingInstructor)');
 
         foreach ($input['trainings'] as $train) {
             if (empty($train['completionDate'])) {
                 jsonResponse(422, ['success' => false, 'message' => 'Each training requires a completionDate.']);
             }
-            $trainId = !empty($train['trainingId']) ? $train['trainingId'] : bin2hex(random_bytes(8));
+
+            $trainTitle = (string)($train['trainingTitle'] ?? '');
+            $trainId = !empty($train['trainingId']) ? (string)$train['trainingId'] : '';
+
+            if ($trainId === '') {
+                $stmtFindTrain->execute(['title' => $trainTitle]);
+                $foundTrain = $stmtFindTrain->fetch(PDO::FETCH_ASSOC);
+                if ($foundTrain && !empty($foundTrain['trainingId'])) {
+                    $trainId = (string)$foundTrain['trainingId'];
+                }
+            }
+
+            if ($trainId === '') {
+                $trainId = bin2hex(random_bytes(8));
+            }
+
             $stmtTrain->execute([
                 'trainId' => $trainId,
-                'title' => $train['trainingTitle'] ?? '',
+                'title' => $trainTitle,
                 'desc' => $train['trainingDescription'] ?? '',
-                'instructor' => $train['trainingInstructor'] ?? '',
                 'duration' => $train['trainingDurationHours'] ?? 0
             ]);
             $stmtAppTrain->execute([
                 'applicantId' => $applicantId,
                 'trainId' => $trainId,
-                'completionDate' => $train['completionDate']
+                'completionDate' => $train['completionDate'],
+                'instructor' => $train['trainingInstructor'] ?? null
             ]);
         }
     }

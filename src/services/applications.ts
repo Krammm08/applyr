@@ -36,8 +36,8 @@ type ApplicationPayload = {
   }
   education?: Education[]
   employmentHistory?: EmploymentHistory[]
-  trainings?: Training[]
-  certificates?: Certificate[]
+  trainings?: Array<Omit<Training, 'trainingId'> & { trainingId?: string | null }>
+  certificates?: Array<Omit<Certificate, 'certificateId'> & { certificateId?: string | null }>
   resumeSettings?: ApplicationResumeSettings
 }
 

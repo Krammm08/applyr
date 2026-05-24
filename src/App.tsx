@@ -501,7 +501,7 @@ function App() {
         completionDate: trimValue(item.completionDate) as string | undefined,
       }))
       .filter((item) =>
-        [item.trainingTitle, item.trainingDescription, item.trainingInstructor, item.trainingDurationHours, item.completionDate].some(
+        [item.trainingTitle, item.trainingInstructor, item.trainingDurationHours, item.completionDate].every(
           (value) => !isBlank(value),
         ),
       )
@@ -516,7 +516,7 @@ function App() {
         dateIssued: trimValue(item.dateIssued) as string | undefined,
       }))
       .filter((item) =>
-        [item.certificateName, item.issuingAuthority, item.validityMonths, item.dateIssued].some((value) => !isBlank(value)),
+        [item.certificateName, item.issuingAuthority, item.validityMonths, item.dateIssued].every((value) => !isBlank(value)),
       )
 
   const sanitizeReferences = (items: ApplicantReference[]) =>
@@ -885,8 +885,14 @@ function App() {
       },
       education: sanitizeEducation(education),
       employmentHistory: sanitizeEmployment(employmentHistory),
-      trainings: sanitizeTrainings(activeJobApplication.trainings || []),
-      certificates: sanitizeCertificates(activeJobApplication.certificates || []),
+      trainings: sanitizeTrainings(activeJobApplication.trainings || []).map((item) => ({
+        ...item,
+        trainingId: item.trainingId || null,
+      })),
+      certificates: sanitizeCertificates(activeJobApplication.certificates || []).map((item) => ({
+        ...item,
+        certificateId: item.certificateId || null,
+      })),
       references: sanitizeReferences(activeJobApplication.references || []),
       resumeSettings: {
         JobApplicationId: activeJobApplicationId,

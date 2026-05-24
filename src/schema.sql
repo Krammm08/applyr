@@ -36,7 +36,8 @@ CREATE TABLE `Certificate` (
   `certificateName` varchar(80) NOT NULL,
   `issuingAuthority` varchar(80) NOT NULL,
   `validityMonths` int(2) NOT NULL,
-  PRIMARY KEY (`certificateId`)
+  PRIMARY KEY (`certificateId`),
+  UNIQUE KEY `certificateName_authority` (`certificateName`,`issuingAuthority`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -70,9 +71,9 @@ CREATE TABLE `Training` (
   `trainingId` char(36) NOT NULL,
   `trainingTitle` varchar(80) NOT NULL,
   `trainingDescription` varchar(255) NOT NULL,
-  `trainingInstructor` varchar(80) NOT NULL,
   `trainingDurationHours` int(3) NOT NULL,
-  PRIMARY KEY (`trainingId`)
+  PRIMARY KEY (`trainingId`),
+  UNIQUE KEY `trainingTitle` (`trainingTitle`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -131,6 +132,7 @@ CREATE TABLE `ApplicantTraining` (
   `applicantId` char(36) NOT NULL,
   `trainingId` char(36) NOT NULL,
   `completionDate` date NOT NULL,
+  `trainingInstructor` varchar(80) DEFAULT NULL,
   PRIMARY KEY (`trainingId`,`applicantId`),
   KEY `fk_apptrain_applicant_idx` (`applicantId`),
   CONSTRAINT `fk_apptrain_applicant` FOREIGN KEY (`applicantId`) REFERENCES `Applicant` (`applicantId`),
