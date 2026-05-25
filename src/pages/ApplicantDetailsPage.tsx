@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Accordion } from '../components/Accordion'
 import GroupBox from '../components/GroupBox'
-import { hasFieldError, type ValidationError } from '../utils/validation'
+import type { ValidationError } from '../utils/validation'
 import type {
   Applicant,
   Education,
@@ -10,7 +10,6 @@ import type {
   Training,
   Certificate,
 } from '../types'
-import { render } from '@react-pdf/renderer'
 import SmartCombobox from '../components/SmartCombobox'
 
 type ActivePanel =
@@ -87,15 +86,13 @@ const ApplicantDetailsPage = ({
   const navigate = useNavigate()
   const [activePanel, setActivePanel] = useState<ActivePanel>({ type: 'list' })
   const [openSections, setOpenSections] = useState<string[]>(['education', 'employment', 'training', 'certificate'])
+  const [showSectionSwitchModal, setShowSectionSwitchModal] = useState(false)
 
   const _setActivePanel = (panel: ActivePanel) => {
     if (activePanel.type === 'list' || panel.type === 'list') {
-    // if (panel.type == "list") {
       setActivePanel(panel)
-    } 
-    else {
-      window.alert("Please submit your changes before editing another section.")
-      // prompt usuer to submmit first before leaving the page if there are validation errors
+    } else {
+      setShowSectionSwitchModal(true)
     }
   }
 
@@ -628,6 +625,33 @@ const renderEducation = (index: number) => {
 
   return (
     <div className="page-shell">
+      {showSectionSwitchModal ? (
+        <div className="modal-backdrop center-align" role="dialog" aria-modal="true" aria-labelledby="section-switch-title">
+          <div className="modal">
+            <h3 id="section-switch-title">Finish This Section First</h3>
+            <p>Please submit your current section before editing another one.</p>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="outline-button"
+                onClick={() => setShowSectionSwitchModal(false)}
+              >
+                Keep Editing
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => {
+                  setActivePanel({ type: 'list' })
+                  setShowSectionSwitchModal(false)
+                }}
+              >
+                Go To Section List
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="resume-shell">
         <section className="panel panel-scroll">
           <div className="panel-content">
