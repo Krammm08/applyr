@@ -82,8 +82,12 @@ const YearSchema = z.preprocess((value) => {
   z.null(),
 ]))
 
+const EntityIdSchema = z.union([z.string(), z.number().int()])
+const OptionalEntityIdSchema = EntityIdSchema.optional()
+const NullableEntityIdSchema = EntityIdSchema.nullable().optional()
+
 export const ApplicantSchema = z.object({
-  applicantId: z.string().optional(),
+  applicantId: OptionalEntityIdSchema,
   applicantName: z.string().min(1),
   homeAddress: z.string().min(1),
   phoneNumber: z.string().min(1),
@@ -94,8 +98,8 @@ export const ApplicantSchema = z.object({
 })
 
 export const EducationSchema = z.object({
-  educationId: z.string().optional(),
-  schoolId: z.string().optional(),
+  educationId: OptionalEntityIdSchema,
+  schoolId: OptionalEntityIdSchema,
   schoolName: z.string().min(1),
   schoolLocation: z.string().min(1),
   startYear: YearSchema,
@@ -105,8 +109,8 @@ export const EducationSchema = z.object({
 })
 
 export const EmploymentSchema = z.object({
-  EmploymentHistoryId: z.string().optional(),
-  companyId: z.string().optional(),
+  EmploymentHistoryId: OptionalEntityIdSchema,
+  companyId: OptionalEntityIdSchema,
   companyName: z.string().min(1),
   companyAddress: z.string().optional().nullable(),
   companyPhone: z.string().optional().nullable(),
@@ -118,7 +122,7 @@ export const EmploymentSchema = z.object({
 })
 
 export const TrainingSchema = z.object({
-  trainingId: z.string().nullable().optional(),
+  trainingId: NullableEntityIdSchema,
   trainingTitle: z.string().min(1),
   trainingDescription: z.string().min(1),
   trainingInstructor: z.string().min(1),
@@ -130,7 +134,7 @@ export const TrainingSchema = z.object({
 })
 
 export const CertificateSchema = z.object({
-  certificateId: z.string().nullable().optional(),
+  certificateId: NullableEntityIdSchema,
   certificateName: z.string().min(1),
   issuingAuthority: z.string().min(1),
   validityMonths: z.preprocess(
@@ -141,7 +145,7 @@ export const CertificateSchema = z.object({
 })
 
 export const ReferenceSchema = z.object({
-  referenceId: z.string().optional(),
+  referenceId: OptionalEntityIdSchema,
   referenceName: z.string().min(1),
   referenceTitle: z.string().min(1),
   referenceCompany: z.string().min(1),
@@ -172,7 +176,7 @@ export const ApplicationPayloadSchema = z.object({
 })
 
 export const ProfileSyncSchema = z.object({
-  applicantId: z.string().min(1),
+  applicantId: EntityIdSchema,
   education: z.array(EducationSchema).optional(),
   employmentHistory: z.array(EmploymentSchema).optional(),
   trainings: z.array(TrainingSchema).optional(),

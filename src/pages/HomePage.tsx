@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ApplicationThumbnail from '../components/ApplicationThumbnail'
+import type { AuthSession } from '../services/auth'
 import type {
   Applicant,
   ApplicationResumeSettings,
@@ -10,11 +11,6 @@ import type {
   Training,
   Certificate,
 } from '../types'
-
-export type AuthSession = {
-  token: string
-  user: { id: string; email: string; name?: string }
-}
 
 type HomePageProps = {
   applicant: Applicant
@@ -105,20 +101,21 @@ const HomePage = ({
 
     if (mode === 'login') {
       await onLogin(email, password)
-    } else {
-      if (password !== confirmPassword) {
-        setLocalError("Passwords do not match.")
-        return
-      }
-      await onSignup(name, email, password)
+      return
     }
+
+    if (password !== confirmPassword) {
+      setLocalError('Passwords do not match.')
+      return
+    }
+
+    await onSignup(name, email, password)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━ LOGGED OUT STATE (SPLIT SCREEN) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if (!authSession) {
     return (
       <div className="auth-split-layout">
-        {/* LEFT PANEL: Branding & Info (Keeps the orange tone via CSS) */}
         <div className="auth-left-panel">
           <div className="auth-left-content">
             <span className="auth-badge">Applyr · Smart Job Applications</span>
@@ -134,23 +131,26 @@ const HomePage = ({
           </div>
         </div>
 
-        {/* RIGHT PANEL: Form */}
         <div className="auth-right-panel">
           <div className="auth-form-container">
-            
-            {/* Custom Tab Switcher */}
             <div className="auth-tabs">
               <button
                 type="button"
                 className={mode === 'login' ? 'is-active' : ''}
-                onClick={() => { setMode('login'); setLocalError(''); }}
+                onClick={() => {
+                  setMode('login')
+                  setLocalError('')
+                }}
               >
                 Sign in
               </button>
               <button
                 type="button"
                 className={mode === 'signup' ? 'is-active' : ''}
-                onClick={() => { setMode('signup'); setLocalError(''); }}
+                onClick={() => {
+                  setMode('signup')
+                  setLocalError('')
+                }}
               >
                 Create account
               </button>
@@ -164,40 +164,67 @@ const HomePage = ({
               {registrationMessage ? <p className="upload-note done">{registrationMessage}</p> : null}
 
               <form className="auth-form" onSubmit={handleSubmit}>
-              {mode === 'signup' && (
+                {mode === 'signup' && (
+                  <label>
+                    Full name
+                    <input
+                      required
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="e.g. Dela Cruz, Juan"
+                    />
+                  </label>
+                )}
                 <label>
-                  Full name
-                  <input required value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Dela Cruz, Juan" />
+                  Email address
+                  <input
+                    required
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="email@example.com"
+                  />
                 </label>
-              )}
-              <label>
-                Email address
-                <input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@example.com" />
-              </label>
-              <label>
-                Password
-                <input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" />
-              </label>
-              {mode === 'signup' && (
                 <label>
-                  Confirm password
-                  <input required type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Re-enter your password" />
+                  Password
+                  <input
+                    required
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Enter your password"
+                  />
                 </label>
-              )}
-              
-              {(localError || authError) ? <p className="auth-error">{localError || authError}</p> : null}
-              
-              <button type="submit" className="primary-button submit-btn" disabled={isAuthLoading}>
-                {isAuthLoading ? 'Working...' : mode === 'login' ? 'Sign in' : 'Create account'}
-              </button>
-            </form>
+                {mode === 'signup' && (
+                  <label>
+                    Confirm password
+                    <input
+                      required
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      placeholder="Re-enter your password"
+                    />
+                  </label>
+                )}
+
+                {(localError || authError) ? <p className="auth-error">{localError || authError}</p> : null}
+
+                <button type="submit" className="primary-button submit-btn" disabled={isAuthLoading}>
+                  {isAuthLoading ? 'Working...' : mode === 'login' ? 'Sign in' : 'Create account'}
+                </button>
+              </form>
             </div>
 
             <div className="auth-footer">
               {mode === 'login' ? (
-                <p>Don't have an account? <button type="button" onClick={() => setMode('signup')}>Create account</button></p>
+                <p>
+                  Don't have an account? <button type="button" onClick={() => setMode('signup')}>Create account</button>
+                </p>
               ) : (
-                <p>Already have an account? <button type="button" onClick={() => setMode('login')}>Sign in</button></p>
+                <p>
+                  Already have an account? <button type="button" onClick={() => setMode('login')}>Sign in</button>
+                </p>
               )}
             </div>
           </div>
@@ -206,7 +233,6 @@ const HomePage = ({
     )
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━ LOGGED IN STATE (DASHBOARD) ━━━━━━━━━━━━━━━━━━━━━━━━━━━
   return (
     <div className="home-shell">
       <header className="home-header">

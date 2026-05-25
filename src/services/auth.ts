@@ -1,7 +1,7 @@
 import type { Education, EmploymentHistory, Certificate, Training } from '../types'
 
 export type AuthUser = {
-  id: string
+  id: number | string
   email: string
   name?: string
 }
@@ -12,7 +12,7 @@ export type AuthSession = {
 }
 
 export type ApplicantProfilePayload = {
-  applicantId: string
+  applicantId: number | string
   applicantName: string
   homeAddress: string
   phoneNumber: string
@@ -27,11 +27,11 @@ export type ApplicantProfilePayload = {
 }
 
 export type ProfileSyncPayload = {
-  applicantId: string
-  education?: Array<Omit<Education, 'educationId'> & { educationId?: string | null }>
-  employmentHistory?: Array<Omit<EmploymentHistory, 'EmploymentHistoryId'> & { EmploymentHistoryId?: string | null }>
-  certificates?: Array<Omit<Certificate, 'certificateId'> & { certificateId?: string | null }>
-  trainings?: Array<Omit<Training, 'trainingId'> & { trainingId?: string | null }>
+  applicantId: number | string
+  education?: Array<Omit<Education, 'educationId'> & { educationId?: number | string | null }>
+  employmentHistory?: Array<Omit<EmploymentHistory, 'EmploymentHistoryId'> & { EmploymentHistoryId?: number | string | null }>
+  certificates?: Array<Omit<Certificate, 'certificateId'> & { certificateId?: number | string | null }>
+  trainings?: Array<Omit<Training, 'trainingId'> & { trainingId?: number | string | null }>
 }
 
 type AuthResponse = {
@@ -107,7 +107,7 @@ export const registerUser = async (name: string, email: string, password: string
   return payload.data
 }
 
-export const getApplicantProfile = async (applicantId: string) => {
+export const getApplicantProfile = async (applicantId: number | string) => {
   const payload = await requestJson<{ success: boolean; data: ApplicantProfilePayload }>(
     `${API_BASE_URL}${endpoints.profile}`,
     { applicantId },
@@ -121,7 +121,7 @@ export const getApplicantProfile = async (applicantId: string) => {
 }
 
 export const updateApplicantProfile = async (payloadBody: {
-  applicantId: string
+  applicantId: number | string
   applicantName: string
   homeAddress: string
   phoneNumber: string

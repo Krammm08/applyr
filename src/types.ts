@@ -1,5 +1,5 @@
 export type Applicant = {
-  applicantId: string
+  applicantId: number | string
   applicantName: string
   homeAddress: string
   phoneNumber: string
@@ -12,7 +12,7 @@ export type Applicant = {
 
 export type JobApplication = {
   JobApplicationId: string
-  applicantId: string
+  applicantId: number | string
   appliedPosition: string
   JobApplicationDate: string
   JobApplicationStatus?: string
@@ -28,11 +28,11 @@ export type JobApplication = {
 }
 
 export type Education = {
-  educationId: string
+  educationId: number | string
   id?: string
-  applicantId: string
+  applicantId: number | string
   isCurrent?: boolean
-  schoolId?: string
+  schoolId?: number | string
   schoolName: string
   schoolLocation: string
   startYear: string | null
@@ -42,11 +42,11 @@ export type Education = {
 }
 
 export type EmploymentHistory = {
-  EmploymentHistoryId: string
+  EmploymentHistoryId: number | string
   id?: string
-  applicantId: string
+  applicantId: number | string
   companyName: string
-  companyId?: string
+  companyId?: number | string
   companyAddress: string
   workPosition: string
   reasonForLeaving?: string | null
@@ -57,8 +57,8 @@ export type EmploymentHistory = {
 }
 
 export type ApplicantReference = {
-  referenceId: string
-  applicantId: string
+  referenceId?: number | string
+  applicantId: number | string
   referenceName: string
   referenceTitle: string
   referenceCompany: string
@@ -67,7 +67,7 @@ export type ApplicantReference = {
 }
 
 export type Training = {
-  trainingId: string
+  trainingId: number | string
   trainingTitle: string
   trainingDescription: string
   trainingDurationHours: string
@@ -76,7 +76,7 @@ export type Training = {
 }
 
 export type Certificate = {
-  certificateId: string
+  certificateId: number | string
   certificateName: string
   issuingAuthority: string
   validityMonths: string

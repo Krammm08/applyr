@@ -83,25 +83,25 @@ export const createApplication = async (payload: ApplicationPayload, token?: str
 export const updateApplication = async (payload: ApplicationPayload, token?: string) =>
   requestJson(`${API_BASE_URL}/api/applications/update.php`, payload, token)
 
-export const deleteApplication = async (jobApplicationId: string, token?: string) =>
-  requestJson(`${API_BASE_URL}/api/applications/delete.php`, { jobApplicationId }, token)
+export const deleteApplication = async (jobApplicationId: string | number, token?: string) =>
+  requestJson(`${API_BASE_URL}/api/applications/delete.php`, { jobApplicationId: String(jobApplicationId) }, token)
 
-export const deleteNestedItem = async (type: 'education' | 'employment' | 'certificate' | 'training' | 'reference', id: string, token?: string) =>
+export const deleteNestedItem = async (type: 'education' | 'employment' | 'certificate' | 'training' | 'reference', id: string | number, token?: string) =>
   requestJsonWithMethod(
-    `${API_BASE_URL}/api/delete_nested.php?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`,
+    `${API_BASE_URL}/api/delete_nested.php?type=${encodeURIComponent(type)}&id=${encodeURIComponent(String(id))}`,
     'DELETE',
     undefined,
     token,
   )
 
-export const getResumeSettings = async (jobApplicationId: string, token?: string) =>
+export const getResumeSettings = async (jobApplicationId: string | number, token?: string) =>
   requestJson<{ success: boolean; data: ApplicationResumeSettings }>(
     `${API_BASE_URL}/api/applications/get.php`,
-    { jobApplicationId },
+    { jobApplicationId: String(jobApplicationId) },
     token,
   )
 
-export const getApplicationsForApplicant = async (applicantId: string, token?: string) =>
+export const getApplicationsForApplicant = async (applicantId: string | number, token?: string) =>
   requestJson<{
     success: boolean
     data: Array<
@@ -111,4 +111,4 @@ export const getApplicationsForApplicant = async (applicantId: string, token?: s
         settingsLastUpdated?: string
       }
     >
-  }>(`${API_BASE_URL}/api/applications/list.php`, { applicantId }, token)
+  }>(`${API_BASE_URL}/api/applications/list.php`, { applicantId: String(applicantId) }, token)

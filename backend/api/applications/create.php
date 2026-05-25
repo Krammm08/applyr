@@ -11,7 +11,17 @@ $applicant = is_array($input['applicant'] ?? null) ? $input['applicant'] : [];
 $jobApplication = is_array($input['jobApplication'] ?? null) ? $input['jobApplication'] : [];
 
 $applicantId = (string)$user['applicantId'];
-$jobApplicationId = (string)($jobApplication['JobApplicationId'] ?? bin2hex(random_bytes(8)));
+
+// Helper to generate a UUID v4 for JobApplicationId
+function uuidv4(): string
+{
+    $data = random_bytes(16);
+    $data[6] = chr((ord($data[6]) & 0x0f) | 0x40);
+    $data[8] = chr((ord($data[8]) & 0x3f) | 0x80);
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+}
+
+$jobApplicationId = (string)($jobApplication['JobApplicationId'] ?? uuidv4());
 
 $defaults = [
     'appliedPosition' => '',
@@ -92,8 +102,8 @@ try {
     // --- Education: find or create School and insert Education rows ---
     if (isset($input['education']) && is_array($input['education'])) {
         $stmtFindSchool = $db->prepare('SELECT schoolId FROM School WHERE schoolName = :name AND schoolLocation = :loc LIMIT 1');
-        $stmtInsertSchool = $db->prepare('INSERT INTO School (schoolId, schoolName, schoolLocation) VALUES (:schoolId, :schoolName, :schoolLocation)');
-        $stmtEd = $db->prepare('INSERT INTO Education (educationId, applicantId, schoolId, startYear, endYear, degreeReceived, programName) VALUES (:educationId, :applicantId, :schoolId, :startYear, :endYear, :degreeReceived, :programName)');
+        $stmtInsertSchool = $db->prepare('INSERT INTO School (schoolName, schoolLocation) VALUES (:schoolName, :schoolLocation)');
+        $stmtEd = $db->prepare('INSERT INTO Education (applicantId, schoolId, startYear, endYear, degreeReceived, programName) VALUES (:applicantId, :schoolId, :startYear, :endYear, :degreeReceived, :programName)');
 
         foreach ($input['education'] as $ed) {
             $schoolName = (string)($ed['schoolName'] ?? '');
@@ -104,13 +114,11 @@ try {
             if ($found && !empty($found['schoolId'])) {
                 $schoolId = $found['schoolId'];
             } else {
-                $schoolId = bin2hex(random_bytes(8));
-                $stmtInsertSchool->execute(['schoolId' => $schoolId, 'schoolName' => $schoolName, 'schoolLocation' => $schoolLocation]);
+                $stmtInsertSchool->execute(['schoolName' => $schoolName, 'schoolLocation' => $schoolLocation]);
+                $schoolId = $db->lastInsertId();
             }
 
-            $educationId = !empty($ed['educationId']) ? $ed['educationId'] : bin2hex(random_bytes(8));
             $stmtEd->execute([
-                'educationId' => $educationId,
                 'applicantId' => $applicantId,
                 'schoolId' => $schoolId,
                 'startYear' => $ed['startYear'] ?? null,
@@ -124,8 +132,8 @@ try {
     // --- Employment: require startDate and endDate; find-or-create Company ---
     if (isset($input['employmentHistory']) && is_array($input['employmentHistory'])) {
         $stmtFindCompany = $db->prepare('SELECT companyId FROM Company WHERE companyName = :name AND companyAddress = :addr LIMIT 1');
-        $stmtInsertCompany = $db->prepare('INSERT INTO Company (companyId, companyName, companyAddress, companyPhone) VALUES (:companyId, :companyName, :companyAddress, :companyPhone)');
-        $stmtEmp = $db->prepare('INSERT INTO EmploymentHistory (EmploymentHistoryId, applicantId, companyId, workPosition, reasonForLeaving, startDate, endDate, isEmployed) VALUES (:empId, :applicantId, :companyId, :workPosition, :reasonForLeaving, :startDate, :endDate, :isEmployed)');
+        $stmtInsertCompany = $db->prepare('INSERT INTO Company (companyName, companyAddress, companyPhone) VALUES (:companyName, :companyAddress, :companyPhone)');
+        $stmtEmp = $db->prepare('INSERT INTO EmploymentHistory (applicantId, companyId, workPosition, reasonForLeaving, startDate, endDate, isEmployed) VALUES (:applicantId, :companyId, :workPosition, :reasonForLeaving, :startDate, :endDate, :isEmployed)');
 
         foreach ($input['employmentHistory'] as $emp) {
             if (empty($emp['startDate']) || empty($emp['endDate'])) {
@@ -140,13 +148,11 @@ try {
             if ($foundC && !empty($foundC['companyId'])) {
                 $companyId = $foundC['companyId'];
             } else {
-                $companyId = bin2hex(random_bytes(8));
-                $stmtInsertCompany->execute(['companyId' => $companyId, 'companyName' => $companyName, 'companyAddress' => $companyAddr, 'companyPhone' => $emp['companyPhone'] ?? '']);
+                $stmtInsertCompany->execute(['companyName' => $companyName, 'companyAddress' => $companyAddr, 'companyPhone' => $emp['companyPhone'] ?? '']);
+                $companyId = $db->lastInsertId();
             }
 
-            $empId = !empty($emp['EmploymentHistoryId']) ? $emp['EmploymentHistoryId'] : bin2hex(random_bytes(8));
             $stmtEmp->execute([
-                'empId' => $empId,
                 'applicantId' => $applicantId,
                 'companyId' => $companyId,
                 'workPosition' => $emp['workPosition'] ?? '',
@@ -182,15 +188,25 @@ try {
             }
 
             if ($certId === '') {
-                $certId = bin2hex(random_bytes(8));
+                // Insert without explicit ID and capture the auto-incremented id
+                $stmtCert = $db->prepare('INSERT INTO Certificate (certificateName, issuingAuthority, validityMonths) VALUES (:certName, :authority, :validity)');
+                $stmtCert->execute([
+                    'certName' => $certName,
+                    'authority' => $authority,
+                    'validity' => $cert['validityMonths'] ?? 0
+                ]);
+                $certId = $db->lastInsertId();
+            } else {
+                // Update existing certificate record
+                $stmtCertUpdate = $db->prepare('UPDATE Certificate SET certificateName = :certName, issuingAuthority = :authority, validityMonths = :validity WHERE certificateId = :certId');
+                $stmtCertUpdate->execute([
+                    'certId' => $certId,
+                    'certName' => $certName,
+                    'authority' => $authority,
+                    'validity' => $cert['validityMonths'] ?? 0
+                ]);
             }
 
-            $stmtCert->execute([
-                'certId' => $certId,
-                'certName' => $certName,
-                'authority' => $authority,
-                'validity' => $cert['validityMonths'] ?? 0
-            ]);
             $stmtAppCert->execute([
                 'applicantId' => $applicantId,
                 'certId' => $certId,
@@ -222,15 +238,24 @@ try {
             }
 
             if ($trainId === '') {
-                $trainId = bin2hex(random_bytes(8));
+                // Insert without explicit ID and capture auto-increment id
+                $stmtTrain = $db->prepare('INSERT INTO Training (trainingTitle, trainingDescription, trainingDurationHours) VALUES (:title, :desc, :duration)');
+                $stmtTrain->execute([
+                    'title' => $trainTitle,
+                    'desc' => $train['trainingDescription'] ?? '',
+                    'duration' => $train['trainingDurationHours'] ?? 0
+                ]);
+                $trainId = $db->lastInsertId();
+            } else {
+                $stmtTrainUpdate = $db->prepare('UPDATE Training SET trainingTitle = :title, trainingDescription = :desc, trainingDurationHours = :duration WHERE trainingId = :trainId');
+                $stmtTrainUpdate->execute([
+                    'trainId' => $trainId,
+                    'title' => $trainTitle,
+                    'desc' => $train['trainingDescription'] ?? '',
+                    'duration' => $train['trainingDurationHours'] ?? 0
+                ]);
             }
 
-            $stmtTrain->execute([
-                'trainId' => $trainId,
-                'title' => $trainTitle,
-                'desc' => $train['trainingDescription'] ?? '',
-                'duration' => $train['trainingDurationHours'] ?? 0
-            ]);
             $stmtAppTrain->execute([
                 'applicantId' => $applicantId,
                 'trainId' => $trainId,
@@ -242,11 +267,9 @@ try {
 
     // --- References: associate references with applicantId ---
     if (isset($input['references']) && is_array($input['references'])) {
-        $stmtRef = $db->prepare('INSERT INTO Reference (referenceId, JobApplicationId, referenceName, referenceTitle, referenceCompany, referencePhone, referenceEmail) VALUES (:referenceId, :jobApplicationId, :referenceName, :referenceTitle, :referenceCompany, :referencePhone, :referenceEmail)');
+        $stmtRef = $db->prepare('INSERT INTO Reference (JobApplicationId, referenceName, referenceTitle, referenceCompany, referencePhone, referenceEmail) VALUES (:jobApplicationId, :referenceName, :referenceTitle, :referenceCompany, :referencePhone, :referenceEmail)');
         foreach ($input['references'] as $ref) {
-            $refId = !empty($ref['referenceId']) ? $ref['referenceId'] : bin2hex(random_bytes(8));
             $stmtRef->execute([
-                'referenceId' => $refId,
                 'jobApplicationId' => $jobApplicationId,
                 'referenceName' => $ref['referenceName'] ?? '',
                 'referenceTitle' => $ref['referenceTitle'] ?? '',
@@ -254,6 +277,7 @@ try {
                 'referencePhone' => $ref['referencePhone'] ?? '',
                 'referenceEmail' => $ref['referenceEmail'] ?? ''
             ]);
+            // $refId = $db->lastInsertId(); // captured if needed later
         }
     }
 

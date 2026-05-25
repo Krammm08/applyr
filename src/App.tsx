@@ -23,11 +23,21 @@ import type {
   Certificate,
 } from './types'
 
-const createId = () => {
+let __tempIdCounter = -1
+const createId = (): number => {
+  return __tempIdCounter--
+}
+
+const createJobApplicationId = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
   }
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+  const bytes = Array.from({ length: 16 }, () => Math.floor(Math.random() * 256))
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
+  const hex = bytes.map((byte) => byte.toString(16).padStart(2, '0')).join('')
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
 
 const createEmptyApplicant = (): Applicant => ({
@@ -42,9 +52,9 @@ const createEmptyApplicant = (): Applicant => ({
   agreesToDrugTest: null,
 })
 
-const createEmptyApplication = (applicantId: string): JobApplication => ({
-  JobApplicationId: createId(),
-  applicantId,
+const createEmptyApplication = (applicantId: number | string): JobApplication => ({
+  JobApplicationId: createJobApplicationId(),
+  applicantId: String(applicantId),
   appliedPosition: '',
   JobApplicationDate: new Date().toISOString().slice(0, 10),
   lastUpdated: new Date().toISOString(),
@@ -56,7 +66,7 @@ const createEmptyApplication = (applicantId: string): JobApplication => ({
   certificates: [],
 })
 
-const createEducation = (applicantId: string): Education => ({
+const createEducation = (applicantId: number | string): Education => ({
   educationId: createId(),
   applicantId,
   schoolId: '',
@@ -68,7 +78,7 @@ const createEducation = (applicantId: string): Education => ({
   programName: '',
 })
 
-const createEmployment = (applicantId: string): EmploymentHistory => ({
+const createEmployment = (applicantId: number | string): EmploymentHistory => ({
   EmploymentHistoryId: createId(),
   applicantId,
   companyName: '',
@@ -81,7 +91,7 @@ const createEmployment = (applicantId: string): EmploymentHistory => ({
   isEmployed: false,
 })
 
-const createReference = (applicantId: string): ApplicantReference => ({
+const createReference = (applicantId: number | string): ApplicantReference => ({
   referenceId: createId(),
   applicantId,
   referenceName: '',
@@ -219,6 +229,18 @@ const sanitizeReferences = (items: ApplicantReference[]) =>
       ),
     )
 
+const toPersistableId = (value: number | string | null | undefined): number | string | undefined => {
+  if (value === null || value === undefined || value === '') {
+    return undefined
+  }
+
+  if (typeof value === 'number') {
+    return value > 0 ? value : undefined
+  }
+
+  return value.startsWith('-') ? undefined : value
+}
+
 const moveItem = <T,>(items: T[], fromIndex: number, toIndex: number) => {
   const next = [...items]
   const [moved] = next.splice(fromIndex, 1)
@@ -245,12 +267,14 @@ const storageKeys = {
   authSession: 'applyr:auth-session',
 }
 
-type StoredApplicant = Partial<Applicant> & { id?: string }
-type StoredJobApplication = Partial<JobApplication> & { id?: string }
-type StoredEducation = Partial<Education> & { id?: string }
-type StoredEmploymentHistory = Partial<EmploymentHistory> & { id?: string }
+type StoredApplicant = Partial<Applicant> & { id?: number | string }
+type StoredJobApplication = Partial<JobApplication> & { id?: number | string }
+type StoredEducation = Partial<Education> & { id?: number | string }
+type StoredEmploymentHistory = Partial<EmploymentHistory> & { id?: number | string }
+type StoredTraining = Partial<Training> & { id?: number | string }
+type StoredCertificate = Partial<Certificate> & { id?: number | string }
 
-const getStorageScope = (userId?: string | null) => (userId ? `user:${userId}` : 'guest')
+const getStorageScope = (userId?: number | string | null) => (userId ? `user:${userId}` : 'guest')
 
 const getScopedStorageKey = (scope: string, key: keyof typeof storageKeys) =>
   `${storageKeys[key]}:${scope}`
@@ -283,12 +307,12 @@ const normalizeApplicant = (value: StoredApplicant): Applicant => ({
 
 const normalizeJobApplication = (
   value: StoredJobApplication,
-  applicantId: string,
+  applicantId: number | string,
   fallbackId: string,
 ): JobApplication => ({
   ...createEmptyApplication(applicantId),
   ...value,
-  JobApplicationId: value.JobApplicationId || value.id || fallbackId,
+  JobApplicationId: String(value.JobApplicationId || value.id || fallbackId),
   applicantId,
   references: value.references ?? [],
   trainings: value.trainings ?? [],
@@ -301,7 +325,7 @@ const normalizeJobApplication = (
 
 const normalizeBackendApplication = (
   value: JobApplication & { previewFont?: string; resumeTemplate?: ApplicationResumeSettings['resumeTemplate'] },
-  fallbackApplicantId: string,
+  fallbackApplicantId: number | string,
 ): JobApplication => ({
   ...createEmptyApplication(fallbackApplicantId),
   ...value,
@@ -328,7 +352,7 @@ function App() {
       initialApplicant.applicantId,
       index === 0
         ? createEmptyApplication(initialApplicant.applicantId).JobApplicationId
-        : createId(),
+        : createJobApplicationId(),
     ),
   )
   const initialActiveJobApplicationId =
@@ -597,6 +621,11 @@ function App() {
       return
     }
 
+    if (entry.referenceId === undefined || entry.referenceId === null || entry.referenceId === '') {
+      updateNestedArray('references', (arr) => arr.filter((_, i) => i !== index))
+      return
+    }
+
     try {
       await deleteNestedItem('reference', entry.referenceId, authSession?.token)
       updateNestedArray('references', (arr) => arr.filter((_, i) => i !== index))
@@ -612,8 +641,8 @@ function App() {
     }
 
     try {
-      const nestedId = (entry.trainingId as string) || (entry as any).id || ''
-      if (!nestedId) {
+      const nestedId = entry.trainingId ?? ((entry as Training & { id?: number | string }).id)
+      if (nestedId == null || nestedId === '') {
         console.warn('Training has no id, skipping backend delete and removing locally')
         updateNestedArray('trainings', (arr) => arr.filter((_, i) => i !== index))
         return
@@ -632,8 +661,8 @@ function App() {
     }
 
     try {
-      const nestedId = (entry.certificateId as string) || (entry as any).id || ''
-      if (!nestedId) {
+      const nestedId = entry.certificateId ?? ((entry as Certificate & { id?: number | string }).id)
+      if (nestedId == null || nestedId === '') {
         console.warn('Certificate has no id, skipping backend delete and removing locally')
         updateNestedArray('certificates', (arr) => arr.filter((_, i) => i !== index))
         return
@@ -660,15 +689,23 @@ function App() {
 
     return {
       applicantId: applicant.applicantId,
-      education: sanitizeEducation(education),
-      employmentHistory: sanitizeEmployment(employmentHistory),
+      education: sanitizeEducation(education).map((item) => ({
+        ...item,
+        educationId: toPersistableId(item.educationId),
+        schoolId: toPersistableId(item.schoolId),
+      })),
+      employmentHistory: sanitizeEmployment(employmentHistory).map((item) => ({
+        ...item,
+        EmploymentHistoryId: toPersistableId(item.EmploymentHistoryId),
+        companyId: toPersistableId(item.companyId),
+      })),
       trainings: sanitizeTrainings(activeJobApplication?.trainings || []).map((item) => ({
         ...item,
-        trainingId: item.trainingId || null,
+        trainingId: toPersistableId(item.trainingId),
       })),
       certificates: sanitizeCertificates(activeJobApplication?.certificates || []).map((item) => ({
         ...item,
-        certificateId: item.certificateId || null,
+        certificateId: toPersistableId(item.certificateId),
       })),
     }
   }, [activeJobApplication, applicant.applicantId, education, employmentHistory])
@@ -681,10 +718,14 @@ function App() {
     return {
       jobApplication: {
         ...activeJobApplication,
+        JobApplicationId: activeJobApplication.JobApplicationId,
         agreesToDrugTest: applicant.agreesToDrugTest ?? false,
         JobApplicationStatus: 'Pending',
       },
-      references: sanitizeReferences(activeJobApplication.references || []),
+      references: sanitizeReferences(activeJobApplication.references || []).map((item) => ({
+        ...item,
+        referenceId: toPersistableId(item.referenceId),
+      })),
       resumeSettings: {
         JobApplicationId: activeJobApplicationId,
         resumeTemplate,
@@ -887,7 +928,7 @@ function App() {
           isEmployed: toBooleanFlag(entry.isEmployed),
         }))
 
-        const backendTrainings = (profile.trainings || []).map((entry) => ({
+        const backendTrainings = (profile.trainings || []).map((entry: StoredTraining) => ({
           trainingId: entry.trainingId || entry.id || createId(),
           trainingTitle: entry.trainingTitle || '',
           trainingDescription: entry.trainingDescription || '',
@@ -896,7 +937,7 @@ function App() {
           completionDate: entry.completionDate || '',
         }))
 
-        const backendCertificates = (profile.certificates || []).map((entry) => ({
+        const backendCertificates = (profile.certificates || []).map((entry: StoredCertificate) => ({
           certificateId: entry.certificateId || entry.id || createId(),
           certificateName: entry.certificateName || '',
           issuingAuthority: entry.issuingAuthority || '',

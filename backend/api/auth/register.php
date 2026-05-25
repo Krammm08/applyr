@@ -38,13 +38,12 @@ try {
     }
 
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    $applicantId = bin2hex(random_bytes(8));
+    // Let the database assign the applicantId (AUTO_INCREMENT). Capture it via lastInsertId.
     $statement = $db->prepare(
-        'INSERT INTO Applicant (applicantId, applicantName, homeAddress, phoneNumber, emailAddress, linkedInUrl, citizenshipStatus, hasCriminalHistory, passwordHash) '
-        . 'VALUES (:applicantId, :name, :homeAddress, :phoneNumber, :email, :linkedInUrl, :citizenshipStatus, :hasCriminalHistory, :hash)'
+        'INSERT INTO Applicant (applicantName, homeAddress, phoneNumber, emailAddress, linkedInUrl, citizenshipStatus, hasCriminalHistory, passwordHash) '
+        . 'VALUES (:name, :homeAddress, :phoneNumber, :email, :linkedInUrl, :citizenshipStatus, :hasCriminalHistory, :hash)'
     );
     $statement->execute([
-        'applicantId' => $applicantId,
         'name' => $name,
         'homeAddress' => '',
         'phoneNumber' => '',
@@ -55,6 +54,7 @@ try {
         'hash' => $hash,
     ]);
 
+    $applicantId = (string)$db->lastInsertId();
     $token = createSessionToken($applicantId);
 
     jsonResponse(201, [
