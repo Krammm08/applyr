@@ -31,6 +31,24 @@ const getBreadcrumb = (pathname: string) => {
 const Navbar = ({ authSession, onLogout }: NavbarProps) => {
   const location = useLocation()
   const breadcrumb = getBreadcrumb(location.pathname)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close dropdown when navigating
+  useEffect(() => {
+    setIsDropdownOpen(false);
+  }, [location.pathname]);
 
   const getInitials = () => {
     if (!authSession) return ''
@@ -80,6 +98,47 @@ const Navbar = ({ authSession, onLogout }: NavbarProps) => {
             <button type="button" className="logout-button" onClick={onLogout}>
               Log out
             </button>
+          </div>
+        ) : (
+          <div className="navbar-auth-links">
+            <span className="navbar-greeting">Welcome</span>
+          </div>
+        )}
+      </div>
+
+      <div className="mobile_navbar-actions">
+        {authSession ? (
+          <div className="navbar-profile" ref={dropdownRef}>
+            <button 
+              type="button" 
+              className="profile-button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              aria-expanded={isDropdownOpen}
+            >
+              {getInitials()}
+            </button>
+
+            {isDropdownOpen && (
+              <div className="profile-dropdown">
+                <div className="dropdown-header">
+                  <p className="dropdown-name">{displayName}</p>
+                  <p className="dropdown-email">{authSession.user.email}</p>
+                </div>
+                <div className="dropdown-divider"></div>
+                <Link to="/" className="dropdown-item">Dashboard</Link>
+                <Link to="/profile" className="dropdown-item">My Profile</Link>
+                <Link to="/applicant" className="dropdown-item">Applicant Info</Link>
+                <div className="dropdown-divider"></div>
+                <button 
+                  type="button" 
+                  className="dropdown-item logout-item" 
+                  onClick={onLogout}
+                >
+                  Log out
+                </button>
+              </div>
+            )}
+          
           </div>
         ) : (
           <div className="navbar-auth-links">

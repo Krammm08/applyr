@@ -241,12 +241,6 @@ const HomePage = ({
           <h1>Track and craft your applications</h1>
         </div>
         <div className="home-actions">
-          <Link
-            to="/profile"
-            className="secondary-button"
-          >
-            ← My Profile
-          </Link>
           <button
             type="button"
             className="primary-button"

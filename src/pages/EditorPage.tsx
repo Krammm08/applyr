@@ -157,11 +157,6 @@ const EditorPage = ({
 
   return (
     <div className="page-shell">
-      <div className="editor-header" style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #e0e0e0' }}>
-        <Link to="/profile" className="btn-secondary" style={{ fontSize: '0.9rem' }}>
-          ← Edit Profile
-        </Link>
-      </div>
       <div className="resume-shell">
         <section className="panel panel-scroll">
           <ResumeAccordion
