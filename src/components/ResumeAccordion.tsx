@@ -46,8 +46,8 @@ type ResumeAccordionProps = {
   onResumeTemplateChange: (template: 'classic' | 'compact' | 'modern') => void
   updateApplicant: <K extends keyof Applicant>(key: K, value: Applicant[K]) => void
   updateApplication: <K extends keyof JobApplication>(key: K, value: JobApplication[K]) => void
-  updateEducation: (index: number, field: keyof Education, value: string) => void
-  updateEmployment: (index: number, field: keyof EmploymentHistory, value: string) => void
+  updateEducation: <K extends keyof Education>(index: number, field: K, value: Education[K]) => void
+  updateEmployment: <K extends keyof EmploymentHistory>(index: number, field: K, value: EmploymentHistory[K]) => void
   updateReference: (index: number, field: keyof ApplicantReference, value: string) => void
   updateTraining: (index: number, field: keyof Training, value: string) => void
   updateCertificate: (index: number, field: keyof Certificate, value: string) => void
@@ -134,6 +134,7 @@ const ResumeAccordion = ({
   onDeleteJobApplication,
   onSyncRequest,
 }: ResumeAccordionPropsWithSync) => {
+  const today = new Date().toISOString().split('T')[0]
   const [activePanel, setActivePanel] = useState<ActivePanel>({ type: 'list' })
   const [dragEducationIndex, setDragEducationIndex] = useState<number | null>(null)
   const [dragEmploymentIndex, setDragEmploymentIndex] = useState<number | null>(null)
@@ -310,6 +311,7 @@ const ResumeAccordion = ({
               <input
                 type="date"
                 value={jobApplication.JobApplicationDate || ''}
+                max={today}
                 onChange={(event) => updateApplication('JobApplicationDate', event.target.value)}
               />
             </label>
@@ -608,9 +610,11 @@ const ResumeAccordion = ({
       return renderList()
     }
 
+    const isValid = entry.schoolName !== '' && entry.degreeReceived !== '' && entry.schoolLocation !== '' && entry.startYear !== '' && (entry.isCurrent || entry.endYear !== '')
+
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Education ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.schoolName !== '' && entry.degreeReceived !== '' && entry.schoolLocation !== '' && entry.startYear !== '' && entry.endYear !== '')}
+        {renderEditorHeader(`Education ${index + 1}`, () => setActivePanel({ type: 'list' }), isValid)}
         <div className="form-grid">
           <label>
             <p className="required-asterisk">School Name</p>
@@ -647,17 +651,6 @@ const ResumeAccordion = ({
             />
           </label>
           <label>
-            <p className="required-asterisk">End Year</p>
-            <input
-              type="number"
-              min={1900}
-              max={2100}
-              value={entry.endYear}
-              onChange={(event) => updateEducation(index, 'endYear', event.target.value)}
-              placeholder="2023"
-            />
-          </label>
-          <label>
             <p className="required-asterisk">Degree Received</p>
             <input
               value={entry.degreeReceived}
@@ -669,6 +662,28 @@ const ResumeAccordion = ({
             <input
               value={entry.programName}
               onChange={(event) => updateEducation(index, 'programName', event.target.value)}
+            />
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              type="checkbox"
+              checked={entry.isCurrent ?? false}
+              onChange={(event) => updateEducation(index, 'isCurrent', event.target.checked)}
+              style={{ width: 'auto', margin: 0 }}
+            />
+            <span>Currently Attending</span>
+          </label>
+          <label>
+            <p className={entry.isCurrent ? 'disabled-label' : 'required-asterisk'}>End Year</p>
+            <input
+              type="number"
+              min={1900}
+              max={2100}
+              value={entry.endYear}
+              onChange={(event) => updateEducation(index, 'endYear', event.target.value)}
+              placeholder="2023"
+              disabled={entry.isCurrent ?? false}
+              style={{ opacity: entry.isCurrent ? 0.5 : 1, cursor: entry.isCurrent ? 'not-allowed' : 'auto' }}
             />
           </label>
         </div>
@@ -692,9 +707,11 @@ const ResumeAccordion = ({
       return renderList()
     }
 
+    const isValid = entry.companyName !== '' && entry.workPosition !== '' && entry.companyAddress !== '' && entry.startDate !== '' && (entry.isEmployed || entry.endDate !== '')
+
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Employment ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.companyName !== '' && entry.workPosition !== '' && entry.companyAddress !== '' && entry.startDate !== '' && entry.endDate !== '')}
+        {renderEditorHeader(`Employment ${index + 1}`, () => setActivePanel({ type: 'list' }), isValid)}
         <div className="form-grid">
           <label>
             <p className="required-asterisk">Company Name</p>
@@ -745,15 +762,29 @@ const ResumeAccordion = ({
             <input
               type="date"
               value={entry.startDate}
+              max={today}
               onChange={(event) => updateEmployment(index, 'startDate', event.target.value)}
             />
           </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              type="checkbox"
+              checked={entry.isEmployed ?? false}
+              onChange={(event) => updateEmployment(index, 'isEmployed', event.target.checked)}
+              style={{ width: 'auto', margin: 0 }}
+            />
+            <span>Currently Employed</span>
+          </label>
           <label>
-            <p className="required-asterisk">End Date</p>
+            <p className={entry.isEmployed ? 'disabled-label' : 'required-asterisk'}>End Date</p>
             <input
               type="date"
               value={entry.endDate}
+              min={entry.startDate || undefined}
+              max={today}
               onChange={(event) => updateEmployment(index, 'endDate', event.target.value)}
+              disabled={entry.isEmployed ?? false}
+              style={{ opacity: entry.isEmployed ? 0.5 : 1, cursor: entry.isEmployed ? 'not-allowed' : 'auto' }}
             />
           </label>
         </div>
@@ -888,6 +919,7 @@ const ResumeAccordion = ({
             <input
               type="date"
               value={entry.completionDate ?? ''}
+              max={today}
               onChange={(event) => updateTraining(index, 'completionDate', event.target.value)}
             />
           </label>
@@ -955,6 +987,7 @@ const ResumeAccordion = ({
             <input
               type="date"
               value={entry.dateIssued ?? ''}
+              max={today}
               onChange={(event) => updateCertificate(index, 'dateIssued', event.target.value)}
             />
           </label>

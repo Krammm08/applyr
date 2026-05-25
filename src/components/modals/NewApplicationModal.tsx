@@ -7,8 +7,9 @@ type Props = {
 }
 
 const NewApplicationModal = ({ isOpen, onClose, onCreate }: Props) => {
+  const today = new Date().toISOString().slice(0, 10)
   const [appliedPosition, setAppliedPosition] = useState('')
-  const [jobDate, setJobDate] = useState(new Date().toISOString().slice(0, 10))
+  const [jobDate, setJobDate] = useState(today)
   const [agrees, setAgrees] = useState(false)
   const [error, setError] = useState('')
 
@@ -38,7 +39,7 @@ const NewApplicationModal = ({ isOpen, onClose, onCreate }: Props) => {
           </label>
           <label>
             Application Date
-            <input type="date" value={jobDate} onChange={(e) => setJobDate(e.target.value)} />
+            <input type="date" value={jobDate} max={today} onChange={(e) => setJobDate(e.target.value)} />
           </label>
           <label className="modal-checkbox-row">
             <input type="checkbox" checked={agrees} onChange={(e) => setAgrees(e.target.checked)} />

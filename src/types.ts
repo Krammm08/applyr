@@ -37,6 +37,7 @@ export type Education = {
   endYear: string
   degreeReceived: string
   programName: string
+  isCurrent?: boolean
 }
 
 export type EmploymentHistory = {

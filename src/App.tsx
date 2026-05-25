@@ -372,16 +372,30 @@ function App() {
     }
   }
 
-  const updateEducation = (index: number, field: keyof Education, value: string) => {
+  const updateEducation = <K extends keyof Education>(index: number, field: K, value: Education[K]) => {
     setEducation((prev) =>
-      prev.map((item, current) => (current === index ? { ...item, [field]: value } : item)),
+      prev.map((item, current) => {
+        if (current !== index) return item
+        const next = { ...item, [field]: value }
+        if (field === 'isCurrent' && value === true) {
+          next.endYear = ''
+        }
+        return next
+      }),
     )
     touchActiveApplication()
   }
 
-  const updateEmployment = (index: number, field: keyof EmploymentHistory, value: string) => {
+  const updateEmployment = <K extends keyof EmploymentHistory>(index: number, field: K, value: EmploymentHistory[K]) => {
     setEmploymentHistory((prev) =>
-      prev.map((item, current) => (current === index ? { ...item, [field]: value } : item)),
+      prev.map((item, current) => {
+        if (current !== index) return item
+        const next = { ...item, [field]: value }
+        if (field === 'isEmployed' && value === true) {
+          next.endDate = ''
+        }
+        return next
+      }),
     )
     touchActiveApplication()
   }
