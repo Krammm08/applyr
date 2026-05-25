@@ -150,7 +150,7 @@ export const ReferenceSchema = z.object({
   referenceTitle: z.string().min(1),
   referenceCompany: z.string().min(1),
   referencePhone: z.string().min(1),
-  referenceEmail: z.string().email(),
+  referenceEmail: z.string().email().optional().nullable(),
 })
 
 export const JobApplicationSchema = z.object({

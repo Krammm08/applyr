@@ -63,7 +63,7 @@ export type ApplicantReference = {
   referenceTitle: string
   referenceCompany: string
   referencePhone: string
-  referenceEmail: string
+  referenceEmail?: string | null
 }
 
 export type Training = {

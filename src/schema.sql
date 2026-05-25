@@ -189,9 +189,10 @@ CREATE TABLE `Reference` (
   `referenceTitle` varchar(80) NOT NULL,
   `referenceCompany` varchar(80) NOT NULL,
   `referencePhone` varchar(20) NOT NULL,
-  `referenceEmail` varchar(255) NOT NULL,
+  `referenceEmail` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`referenceId`),
-  UNIQUE KEY `referenceEmail` (`referenceEmail`),
+  -- Allow multiple job applications to reference the same email and allow NULL emails
+  UNIQUE KEY `jobApp_referenceEmail` (`JobApplicationId`,`referenceEmail`),
   KEY `JobApplicationId` (`JobApplicationId`),
   CONSTRAINT `fk_ref_jobapp` FOREIGN KEY (`JobApplicationId`) REFERENCES `JobApplication` (`JobApplicationId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

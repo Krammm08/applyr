@@ -48,6 +48,15 @@ ALTER TABLE `EmploymentHistory` MODIFY COLUMN `EmploymentHistoryId` INT(10) NOT 
 -- Reference
 ALTER TABLE `Reference` MODIFY COLUMN `referenceId` INT(10) NOT NULL AUTO_INCREMENT;
 
+-- Ensure referenceEmail allows NULL and uniqueness is scoped per JobApplication
+-- (prevents a global unique constraint on email from causing inserts to update
+-- an existing row from a different job application).
+ALTER TABLE `Reference` MODIFY COLUMN `referenceEmail` VARCHAR(255) DEFAULT NULL;
+-- Drop global index on referenceEmail if present and add composite unique index
+-- on (JobApplicationId, referenceEmail).
+DROP INDEX IF EXISTS `referenceEmail` ON `Reference`;
+ALTER TABLE `Reference` ADD UNIQUE KEY `jobApp_referenceEmail` (`JobApplicationId`,`referenceEmail`);
+
 -- Note: JobApplication intentionally remains varchar(36) UUID.
 -- ApplicationResumeSettings.JobApplicationId and Reference.JobApplicationId remain varchar(36).
 

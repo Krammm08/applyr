@@ -722,10 +722,17 @@ function App() {
         agreesToDrugTest: applicant.agreesToDrugTest ?? false,
         JobApplicationStatus: 'Pending',
       },
-      references: sanitizeReferences(activeJobApplication.references || []).map((item) => ({
-        ...item,
-        referenceId: toPersistableId(item.referenceId),
-      })),
+      references: sanitizeReferences(activeJobApplication.references || []).map((item) => {
+        const ref: any = { ...item }
+        const pid = toPersistableId(item.referenceId)
+        if (pid !== undefined) {
+          ref.referenceId = pid
+        } else {
+          // Ensure we don't send placeholder ids (e.g. 1 or negative temp ids)
+          delete ref.referenceId
+        }
+        return ref
+      }),
       resumeSettings: {
         JobApplicationId: activeJobApplicationId,
         resumeTemplate,
@@ -1153,7 +1160,32 @@ function App() {
       }
       if (applicationPayload) {
         ApplicationSyncSchema.parse(applicationPayload)
-        await syncApplication(applicationPayload, authSession?.token)
+        const res = await syncApplication(applicationPayload, authSession?.token)
+        // If backend returned reference ids for inserted/updated refs, map them into local state
+        try {
+          const returned = (res as any)?.data?.referenceIds as
+            | Array<{ referenceEmail?: string | null; referenceId?: number | string }>
+            | undefined
+
+          if (returned && returned.length > 0) {
+            setJobApplications((prev) =>
+              prev.map((app) => {
+                if (app.JobApplicationId !== applicationPayload.jobApplication.JobApplicationId) return app
+                const next = { ...app }
+                next.references = (next.references || []).map((r) => {
+                  const match = returned.find((x) => x.referenceEmail && x.referenceEmail === (r.referenceEmail || null))
+                  if (match && match.referenceId) {
+                    return { ...r, referenceId: match.referenceId }
+                  }
+                  return r
+                })
+                return next
+              }),
+            )
+          }
+        } catch (e) {
+          // non-fatal mapping error
+        }
       }
     } catch (err) {
       console.warn('Validation failed for payload, aborting sync:', err)

@@ -265,19 +265,40 @@ try {
         }
     }
 
-    // --- References: associate references with applicantId ---
+    // --- References: associate references with applicantId (upsert) ---
+    $returnedReferences = [];
     if (isset($input['references']) && is_array($input['references'])) {
-        $stmtRef = $db->prepare('INSERT INTO Reference (JobApplicationId, referenceName, referenceTitle, referenceCompany, referencePhone, referenceEmail) VALUES (:jobApplicationId, :referenceName, :referenceTitle, :referenceCompany, :referencePhone, :referenceEmail)');
+        $stmtUpsertRef = $db->prepare('INSERT INTO Reference (JobApplicationId, referenceName, referenceTitle, referenceCompany, referencePhone, referenceEmail) VALUES (:jobApplicationId, :referenceName, :referenceTitle, :referenceCompany, :referencePhone, :referenceEmail) ON DUPLICATE KEY UPDATE referenceName = VALUES(referenceName), referenceTitle = VALUES(referenceTitle), referenceCompany = VALUES(referenceCompany), referencePhone = VALUES(referencePhone)');
+        $stmtSelectRefByEmail = $db->prepare('SELECT referenceId FROM Reference WHERE referenceEmail = :referenceEmail LIMIT 1');
+        $stmtSelectRefByEmailAndJob = $db->prepare('SELECT referenceId FROM Reference WHERE JobApplicationId = :jobApplicationId AND referenceEmail = :referenceEmail LIMIT 1');
+
         foreach ($input['references'] as $ref) {
-            $stmtRef->execute([
+            $email = !empty($ref['referenceEmail']) ? $ref['referenceEmail'] : null;
+            $stmtUpsertRef->execute([
                 'jobApplicationId' => $jobApplicationId,
                 'referenceName' => $ref['referenceName'] ?? '',
                 'referenceTitle' => $ref['referenceTitle'] ?? '',
                 'referenceCompany' => $ref['referenceCompany'] ?? '',
                 'referencePhone' => $ref['referencePhone'] ?? '',
-                'referenceEmail' => $ref['referenceEmail'] ?? ''
+                'referenceEmail' => $email
             ]);
-            // $refId = $db->lastInsertId(); // captured if needed later
+
+            $lastId = $db->lastInsertId();
+            if ($lastId && $lastId !== '0') {
+                $returnedReferences[] = ['referenceId' => $lastId, 'referenceEmail' => $email];
+            } else {
+                if ($email !== null) {
+                    $stmtSelectRefByEmailAndJob->execute(['jobApplicationId' => $jobApplicationId, 'referenceEmail' => $email]);
+                    $found = $stmtSelectRefByEmailAndJob->fetch(PDO::FETCH_ASSOC);
+                    if (!$found) {
+                        $stmtSelectRefByEmail->execute(['referenceEmail' => $email]);
+                        $found = $stmtSelectRefByEmail->fetch(PDO::FETCH_ASSOC);
+                    }
+                    if ($found && !empty($found['referenceId'])) {
+                        $returnedReferences[] = ['referenceId' => $found['referenceId'], 'referenceEmail' => $email];
+                    }
+                }
+            }
         }
     }
 
@@ -287,6 +308,7 @@ try {
         'success' => true,
         'data' => [
             'jobApplicationId' => $jobApplicationId,
+            'referenceIds' => $returnedReferences,
         ],
     ]);
 } catch (Throwable $error) {

@@ -287,11 +287,15 @@ try {
         ]);
     }
 
-    // Insert/update References
+    // Insert/update References (upsert) and collect resulting ids to return to client
+    $returnedReferences = [];
     if (isset($input['references']) && is_array($input['references'])) {
-        $stmtRef = $db->prepare('INSERT INTO Reference (JobApplicationId, referenceName, referenceTitle, referenceCompany, referencePhone, referenceEmail) VALUES (:jobApplicationId, :referenceName, :referenceTitle, :referenceCompany, :referencePhone, :referenceEmail) ON DUPLICATE KEY UPDATE referenceName=VALUES(referenceName), referenceTitle=VALUES(referenceTitle), referenceCompany=VALUES(referenceCompany), referencePhone=VALUES(referencePhone), referenceEmail=VALUES(referenceEmail), JobApplicationId=VALUES(JobApplicationId)');
+        $stmtUpsertRef = $db->prepare('INSERT INTO Reference (JobApplicationId, referenceName, referenceTitle, referenceCompany, referencePhone, referenceEmail) VALUES (:jobApplicationId, :referenceName, :referenceTitle, :referenceCompany, :referencePhone, :referenceEmail) ON DUPLICATE KEY UPDATE referenceName = VALUES(referenceName), referenceTitle = VALUES(referenceTitle), referenceCompany = VALUES(referenceCompany), referencePhone = VALUES(referencePhone)');
+        $stmtSelectRefByEmail = $db->prepare('SELECT referenceId FROM Reference WHERE referenceEmail = :referenceEmail LIMIT 1');
+        $stmtSelectRefByEmailAndJob = $db->prepare('SELECT referenceId FROM Reference WHERE JobApplicationId = :jobApplicationId AND referenceEmail = :referenceEmail LIMIT 1');
+
         foreach ($input['references'] as $ref) {
-            // If referenceId provided, try updating first
+            $email = !empty($ref['referenceEmail']) ? $ref['referenceEmail'] : null;
             if (!empty($ref['referenceId'])) {
                 $stmtUpdateRef = $db->prepare('UPDATE Reference SET JobApplicationId = :jobApplicationId, referenceName = :referenceName, referenceTitle = :referenceTitle, referenceCompany = :referenceCompany, referencePhone = :referencePhone, referenceEmail = :referenceEmail WHERE referenceId = :referenceId');
                 $stmtUpdateRef->execute([
@@ -301,17 +305,37 @@ try {
                     'referenceTitle' => $ref['referenceTitle'] ?? '',
                     'referenceCompany' => $ref['referenceCompany'] ?? '',
                     'referencePhone' => $ref['referencePhone'] ?? '',
-                    'referenceEmail' => $ref['referenceEmail'] ?? ''
+                    'referenceEmail' => $email
                 ]);
+                $returnedReferences[] = ['referenceId' => $ref['referenceId'], 'referenceEmail' => $email];
             } else {
-                $stmtRef->execute([
+                $stmtUpsertRef->execute([
                     'jobApplicationId' => $jobApplicationId,
                     'referenceName' => $ref['referenceName'] ?? '',
                     'referenceTitle' => $ref['referenceTitle'] ?? '',
                     'referenceCompany' => $ref['referenceCompany'] ?? '',
                     'referencePhone' => $ref['referencePhone'] ?? '',
-                    'referenceEmail' => $ref['referenceEmail'] ?? ''
+                    'referenceEmail' => $email
                 ]);
+
+                $lastId = $db->lastInsertId();
+                if ($lastId && $lastId !== '0') {
+                    $returnedReferences[] = ['referenceId' => $lastId, 'referenceEmail' => $email];
+                } else {
+                    // upsert matched an existing row; try to find it
+                    if ($email !== null) {
+                        // prefer matching by JobApplicationId + email if possible
+                        $stmtSelectRefByEmailAndJob->execute(['jobApplicationId' => $jobApplicationId, 'referenceEmail' => $email]);
+                        $found = $stmtSelectRefByEmailAndJob->fetch(PDO::FETCH_ASSOC);
+                        if (!$found) {
+                            $stmtSelectRefByEmail->execute(['referenceEmail' => $email]);
+                            $found = $stmtSelectRefByEmail->fetch(PDO::FETCH_ASSOC);
+                        }
+                        if ($found && !empty($found['referenceId'])) {
+                            $returnedReferences[] = ['referenceId' => $found['referenceId'], 'referenceEmail' => $email];
+                        }
+                    }
+                }
             }
         }
     }
@@ -322,6 +346,7 @@ try {
         'success' => true,
         'data' => [
             'jobApplicationId' => $jobApplicationId,
+            'referenceIds' => $returnedReferences,
         ],
     ]);
 } catch (Throwable $error) {
