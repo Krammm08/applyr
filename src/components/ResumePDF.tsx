@@ -36,6 +36,50 @@ const getDisplayValue = (value: string | null | undefined, fallback = "Not provi
 }
 const getYesNo = (value: boolean | null) => value === null ? "Not provided" : (value ? "Yes" : "No");
 
+const formatDateForPDF = (value: string | Date | null | undefined, includeDay= true) => {
+  if (!value) return ''
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ]
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear()
+    const monthName = months[value.getMonth()]
+    const day = value.getDate()
+    return `${year}, ${monthName} ${day}`
+  }
+
+  if (typeof value !== 'string') return ''
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+
+  const normalized = trimmed.includes('T') ? trimmed.split('T')[0] : trimmed
+  const match = normalized.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?$/)
+  if (!match) return ''
+  const [, yearStr, monthStr, dayStr = '1'] = match
+  const year = Number(yearStr)
+  const monthIndex = Number(monthStr) - 1
+  const day = Number(dayStr)
+  if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || !Number.isFinite(day)) return ''
+  if (monthIndex < 0 || monthIndex > 11) return ''
+  if (includeDay) {
+    return `${year}, ${months[monthIndex]} ${day}`
+  } else {
+    return `${year}, ${months[monthIndex]}`
+  }
+}
+
 const formatEducationRange = (entry: Education) => {
   if (!entry.startYear && !entry.endYear && !entry.isCurrent) return 'Not provided'
   const endLabel = entry.isCurrent ? 'Present' : (entry.endYear || '')
@@ -45,9 +89,10 @@ const formatEducationRange = (entry: Education) => {
 
 const formatEmploymentRange = (entry: EmploymentHistory) => {
   if (!entry.startDate && !entry.endDate && !entry.isEmployed) return 'Not provided'
-  const endLabel = entry.isEmployed ? 'Present' : (entry.endDate || '')
-  if (entry.startDate && endLabel) return `${entry.startDate} - ${endLabel}`
-  return entry.startDate || endLabel || 'Not provided'
+  const startLabel = formatDateForPDF(entry.startDate, false)
+  const endLabel = entry.isEmployed ? 'Present' : formatDateForPDF(entry.endDate, false)
+  if (startLabel && endLabel) return `${startLabel} - ${endLabel}`
+  return startLabel || endLabel || 'Not provided'
 }
 
 export const ResumePDF = ({ applicant, jobApplication, education, employmentHistory, references, trainings, certificates, previewFont, resumeTemplate }: ResumePDFProps) => {
@@ -221,7 +266,7 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                   <View style={styles.sectionCol}>
                     <View style={styles.sectionColItem}>
                       <Text style={styles.bold}>Start date: </Text>
-                      <Text>{getDisplayValue(jobApplication.availableStartDate)}</Text>
+                      <Text>{formatDateForPDF(jobApplication.availableStartDate) || getDisplayValue(jobApplication.availableStartDate)}</Text>
                     </View>
                     <View style={styles.sectionColItem}>
                       <Text style={styles.bold}>Expected salary: </Text>
@@ -299,18 +344,17 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                       {employmentHistory.map((entry, idx) => (
                         <View key={idx} style={styles.lineBlock} wrap={false}>
                           <View style={styles.lineFlex}>
-                            <Text style={styles.italic}>{entry.companyName}</Text>
+                            <Text style={styles.italic}>{entry.companyName} | {entry.workPosition}</Text>
                             <View style={styles.lineFlex}>
                               <Text style={styles.italic}>{formatEmploymentRange(entry)}</Text>
                             </View>
                           </View>
                           <View style={styles.lineFlex}>
-                            <Text>{entry.workPosition}</Text>
-                            <Text>{entry.reasonForLeaving ? `Reason for leaving: ${entry.reasonForLeaving}` : ''}</Text>
+                            <Text>{entry.companyAddress}</Text>
                           </View>
                           <View style={styles.lineFlex}>
-                            <Text>{entry.companyAddress}</Text>
-                            <Text style={styles.italic}>Company Phone: {entry.companyPhone || 'N/A'}</Text>
+                            <Text>{entry.reasonForLeaving ? `Reason for leaving: ${entry.reasonForLeaving}` : ''}</Text>
+                            <Text style={styles.italic}>{entry.companyPhone || 'N/A'}</Text>
                           </View>
                         </View>
                       ))}
@@ -332,7 +376,7 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                         <View key={idx} style={styles.lineBlock} wrap={false}>
                           <View style={styles.lineFlex}>
                             <Text style={styles.bold}>{getDisplayValue(entry.trainingTitle, "Title")}</Text>
-                            <Text>{entry.completionDate || 'N/A'}</Text>
+                            <Text>{formatDateForPDF(entry.completionDate) || 'N/A'}</Text>
                           </View>
                           <View style={styles.lineFlex}>
                             <Text style={styles.italic}>{getDisplayValue(entry.trainingInstructor, "Instructor")}</Text>
@@ -363,7 +407,7 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                         <View key={idx} style={styles.lineBlock} wrap={false}>
                           <View style={styles.lineFlex}>
                             <Text style={styles.bold}>{getDisplayValue(entry.certificateName, "Name")}</Text>
-                            <Text>{entry.dateIssued || 'N/A'}</Text>
+                            <Text>{formatDateForPDF(entry.dateIssued) || 'N/A'}</Text>
                           </View>
                           <View style={styles.lineFlex}>
                             <Text style={styles.italic}>{getDisplayValue(entry.issuingAuthority, "Authority")}</Text>

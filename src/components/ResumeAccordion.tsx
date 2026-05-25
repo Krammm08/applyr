@@ -140,6 +140,7 @@ const ResumeAccordion = ({
   onSyncRequest,
 }: ResumeAccordionPropsWithSync) => {
   const today = new Date().toISOString().split('T')[0]
+  const currentMonth = new Date().toISOString().slice(0, 7)
   const currentYear = new Date().getFullYear()
   const blockInvalidNumberKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'e' || event.key === 'E' || event.key === '+' || event.key === '-') {
@@ -848,9 +849,9 @@ const ResumeAccordion = ({
           <label>
             <p className="required-asterisk">Start Date</p>
             <input
-              type="date"
+              type="month"
               value={entry.startDate}
-              max={today}
+              max={currentMonth}
               onChange={(event) => updateEmployment(index, 'startDate', event.target.value)}
             />
             {renderFieldError(`employmentHistory.${index}.startDate`)}
@@ -867,10 +868,10 @@ const ResumeAccordion = ({
           <label>
             <p className={entry.isEmployed ? 'disabled-label' : 'required-asterisk'}>End Date</p>
             <input
-              type="date"
+              type="month"
               value={entry.endDate}
               min={entry.startDate || undefined}
-              max={today}
+              max={currentMonth}
               onChange={(event) => updateEmployment(index, 'endDate', event.target.value)}
               disabled={entry.isEmployed ?? false}
               style={{ opacity: entry.isEmployed ? 0.5 : 1, cursor: entry.isEmployed ? 'not-allowed' : 'auto' }}

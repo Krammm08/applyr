@@ -474,6 +474,15 @@ function App() {
 
   const trimValue = (value: unknown) => (typeof value === 'string' ? value.trim() : value)
 
+  const normalizeMonthDate = (value: unknown) => {
+    const trimmed = trimValue(value)
+    if (typeof trimmed !== 'string') return trimmed
+    if (/^\d{4}-\d{2}$/.test(trimmed)) {
+      return `${trimmed}-01`
+    }
+    return trimmed
+  }
+
   const sanitizeEducation = (items: Education[]) =>
     items
       .map((item) => ({
@@ -500,12 +509,15 @@ function App() {
         companyPhone: (item.companyPhone || '').trim(),
         workPosition: item.workPosition.trim(),
         reasonForLeaving: typeof item.reasonForLeaving === 'string' ? item.reasonForLeaving.trim() : item.reasonForLeaving,
-        startDate: trimValue(item.startDate) as string,
-        endDate: trimValue(item.endDate) as string,
+        startDate: normalizeMonthDate(item.startDate) as string,
+        endDate: item.isEmployed ? null : (normalizeMonthDate(item.endDate) as string | null),
       }))
-      .filter((item) =>
-        [item.companyName, item.workPosition, item.startDate, item.endDate].every((value) => !isBlank(value)),
-      )
+      .filter((item) => {
+        const baseValid = [item.companyName, item.workPosition, item.startDate].every((value) => !isBlank(value))
+        if (!baseValid) return false
+        if (item.isEmployed) return true
+        return !isBlank(item.endDate)
+      })
 
   const sanitizeTrainings = (items: Training[]) =>
     items
