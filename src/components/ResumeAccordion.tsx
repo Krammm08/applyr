@@ -52,25 +52,27 @@ type ResumeAccordionProps = {
   updateReference: (index: number, field: keyof ApplicantReference, value: string) => void
   updateTraining: (index: number, field: keyof Training, value: string) => void
   updateCertificate: (index: number, field: keyof Certificate, value: string) => void
-  addEducation: () => void
-  removeEducation: (index: number) => Promise<void>
   reorderEducation: (fromIndex: number, toIndex: number) => void
-  addEmployment: () => void
-  removeEmployment: (index: number) => Promise<void>
   reorderEmployment: (fromIndex: number, toIndex: number) => void
   addReference: () => void
   removeReference: (index: number) => Promise<void>
   reorderReferences: (fromIndex: number, toIndex: number) => void
-  addTraining: () => void
-  removeTraining: (index: number) => Promise<void>
   reorderTrainings: (fromIndex: number, toIndex: number) => void
-  addCertificate: () => void
-  removeCertificate: (index: number) => Promise<void>
   reorderCertificates: (fromIndex: number, toIndex: number) => void
   handleResumeUpload: (file: File | null) => Promise<void>
   onDeleteJobApplication: (jobApplicationId: string) => Promise<void>
   validationErrors: ValidationError[]
   isValidationBlocked: boolean
+}
+
+const isValidPhoneNumber = (value: string) => {
+  if (!value) return false;
+  
+  // Strip all non-numeric characters first
+  const digits = value.replace(/\D/g, '');
+  
+  // Mobile (Philippines): strictly starts with 09 and is exactly 11 digits total
+  return /^09\d{9}$/.test(digits);
 }
 
 // Custom hook to sync state with localStorage
@@ -119,20 +121,12 @@ const ResumeAccordion = ({
   updateReference,
   updateTraining,
   updateCertificate,
-  addEducation,
-  removeEducation,
   reorderEducation,
-  addEmployment,
-  removeEmployment,
   reorderEmployment,
   addReference,
   removeReference,
   reorderReferences,
-  addTraining,
-  removeTraining,
   reorderTrainings,
-  addCertificate,
-  removeCertificate,
   reorderCertificates,
   onDeleteJobApplication,
   validationErrors,
@@ -235,11 +229,6 @@ const ResumeAccordion = ({
     setter(null)
   }
 
-  const openEducation = (index: number) => setActivePanel({ type: 'education', index })
-  const openEmployment = (index: number) => setActivePanel({ type: 'employment', index })
-  const openReference = (index: number) => setActivePanel({ type: 'reference', index })
-  const openTraining = (index: number) => setActivePanel({ type: 'training', index })
-  const openCertificate = (index: number) => setActivePanel({ type: 'certificate', index })
 
   const [openSections, setOpenSections] = useStickyState<string>([], 'accordion-open-sections');
 
@@ -653,8 +642,10 @@ const ResumeAccordion = ({
           <input
             type="date"
             value={jobApplication.availableStartDate}
+            min={jobApplication.JobApplicationDate || undefined}
             onChange={(event) => updateApplication('availableStartDate', event.target.value)}
           />
+          {renderFieldError('jobApplication.availableStartDate')}
         </label>
         <label>
           Expected Salary
@@ -691,7 +682,7 @@ const ResumeAccordion = ({
             <SmartCombobox
               fetchUrl="/backend/api/schools/list.php"
               valueName={entry.schoolName}
-              valueId={entry.schoolId ?? null}
+              valueId={entry.schoolId != null ? String(entry.schoolId) : null}
               placeholder="e.g., Polytechnic University of the Philippines"
               onChange={({ name, id, location }) => {
                 updateEducation(index, 'schoolName', name)
@@ -758,7 +749,7 @@ const ResumeAccordion = ({
             <p className={entry.isCurrent ? 'disabled-label' : 'required-asterisk'}>End Year</p>
             <input
               type="number"
-              min={1900}
+              min={entry.startYear ? Number(entry.startYear) : 1900}
               max={currentYear}
               minLength={4}
               maxLength={4}
@@ -798,7 +789,7 @@ const ResumeAccordion = ({
             <SmartCombobox
               fetchUrl="/backend/api/companies/list.php"
               valueName={entry.companyName}
-              valueId={entry.companyId ?? null}
+              valueId={entry.companyId != null ? String(entry.companyId) : null}
               placeholder="e.g., Tech Solutions Inc."
               onChange={({ name, id, location }) => {
                 updateEmployment(index, 'companyName', name)
@@ -934,13 +925,20 @@ const ResumeAccordion = ({
               }
               placeholder="e.g., 0917 123 4567"
             />
+            {entry.referencePhone ? (
+                  isValidPhoneNumber(entry.referencePhone) ? (
+                    <p style={{ color: '#15803d', fontSize: '0.85rem', marginTop: 6 }}>Valid phone number</p>
+                  ) : (
+                    <p style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: 6 }}>Invalid phone number. Use mobile (09XXXXXXXXX).</p>
+                  )
+                ) : null}
             {renderFieldError(`references.${index}.referencePhone`)}
           </label>
           <label>
             Email
             <input
               type="email"
-              value={entry.referenceEmail}
+              value={entry.referenceEmail ?? ''}
               onChange={(event) => updateReference(index, 'referenceEmail', event.target.value)}
               placeholder="e.g., alan@example.com"
             />
@@ -991,7 +989,7 @@ const ResumeAccordion = ({
             <SmartCombobox
               fetchUrl="/backend/api/trainings/list.php"
               valueName={entry.trainingTitle}
-              valueId={entry.trainingId ?? null}
+              valueId={entry.trainingId != null ? String(entry.trainingId) : null}
               placeholder="e.g., Agile Scrum Mastery"
               onChange={({ name, id, description, duration }) => {
                 updateTraining(index, 'trainingTitle', name)
@@ -1088,7 +1086,7 @@ const ResumeAccordion = ({
             <SmartCombobox
               fetchUrl="/backend/api/certificates/list.php"
               valueName={entry.certificateName}
-              valueId={entry.certificateId ?? null}
+              valueId={entry.certificateId != null ? String(entry.certificateId) : null}
               placeholder="e.g., AWS Certified Developer"
               onChange={({ name, id, location, validityMonths }) => {
                 updateCertificate(index, 'certificateName', name)

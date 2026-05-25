@@ -221,7 +221,7 @@ const sanitizeReferences = (items: ApplicantReference[]) =>
       referenceTitle: item.referenceTitle.trim(),
       referenceCompany: item.referenceCompany.trim(),
       referencePhone: item.referencePhone.trim(),
-      referenceEmail: item.referenceEmail.trim(),
+      referenceEmail: (item.referenceEmail ?? '').trim(),
     }))
     .filter((item) =>
       [item.referenceName, item.referenceTitle, item.referenceCompany, item.referencePhone, item.referenceEmail].some(
@@ -723,7 +723,11 @@ function App() {
         JobApplicationStatus: 'Pending',
       },
       references: sanitizeReferences(activeJobApplication.references || []).map((item) => {
-        const ref: any = { ...item }
+        const ref: ApplicantReference = {
+          ...item,
+          applicantId: item.applicantId,
+          referenceEmail: item.referenceEmail ?? null,
+        }
         const pid = toPersistableId(item.referenceId)
         if (pid !== undefined) {
           ref.referenceId = pid
@@ -1163,9 +1167,12 @@ function App() {
         const res = await syncApplication(applicationPayload, authSession?.token)
         // If backend returned reference ids for inserted/updated refs, map them into local state
         try {
-          const returned = (res as any)?.data?.referenceIds as
-            | Array<{ referenceEmail?: string | null; referenceId?: number | string }>
-            | undefined
+          const responseData = res as {
+            data?: {
+              referenceIds?: Array<{ referenceEmail?: string | null; referenceId?: number | string }>
+            }
+          }
+          const returned = responseData?.data?.referenceIds
 
           if (returned && returned.length > 0) {
             setJobApplications((prev) =>
@@ -1183,7 +1190,7 @@ function App() {
               }),
             )
           }
-        } catch (e) {
+        } catch {
           // non-fatal mapping error
         }
       }

@@ -106,6 +106,16 @@ const ApplicantEditPage = ({
 		}
 	};
 
+  const isValidPhoneNumber = (value: string) => {
+    if (!value) return false;
+    
+    // Strip all non-numeric characters first
+    const digits = value.replace(/\D/g, '');
+    
+    // Mobile (Philippines): strictly starts with 09 and is exactly 11 digits total
+    return /^09\d{9}$/.test(digits);
+  }
+
 		const onboardingFieldTotal = 5
 		const onboardingFieldsComplete = [
 			applicantName.trim(),
@@ -201,6 +211,13 @@ const ApplicantEditPage = ({
 											onChange={(event) => setPhoneNumber(event.target.value)}
 											placeholder="e.g., +63 917 123 4567"
 										/>
+                    {phoneNumber ? (
+                  isValidPhoneNumber(phoneNumber) ? (
+                    <p style={{ color: '#15803d', fontSize: '0.85rem', marginTop: 6 }}>Valid phone number</p>
+                  ) : (
+                    <p style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: 6 }}>Invalid phone number. Use mobile (09XXXXXXXXX).</p>
+                  )
+                ) : null}
 									</label>
 									<label>
 										<p className="required-asterisk">Email Address</p>

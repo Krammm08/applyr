@@ -1,5 +1,31 @@
 import { z } from 'zod'
 
+const isValidDateString = (value: unknown) => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false
+  }
+
+  const parsed = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+}
+
+const isValidEmploymentPeriodString = (value: unknown) => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}(?:-\d{2})?$/.test(value)) {
+    return false
+  }
+
+  const monthKey = value.slice(0, 7)
+  const parsed = new Date(`${monthKey}-01T00:00:00Z`)
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 7) === monthKey
+}
+
+const isValidYearString = (value: unknown) => {
+  return typeof value === 'string' && /^[0-9]{4}$/.test(value)
+}
+
+const parseDateUTC = (value: string) => new Date(`${value}T00:00:00Z`)
+const parseMonthAsDateUTC = (value: string) => new Date(`${value}-01T00:00:00Z`)
+
 const NullableBooleanSchema = z.preprocess((value) => {
   if (value === '' || value === undefined || value === null) {
     return null
@@ -106,6 +132,30 @@ export const EducationSchema = z.object({
   endYear: YearSchema,
   degreeReceived: z.string().min(1),
   programName: z.string().min(1),
+  isCurrent: OptionalBooleanLikeSchema,
+}).superRefine((value, context) => {
+  const { startYear, endYear } = value
+
+  if (startYear && isValidYearString(startYear)) {
+    const currentYear = new Date().getUTCFullYear()
+    if (Number(startYear) > currentYear) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['startYear'],
+        message: 'Start year cannot be in the future',
+      })
+    }
+  }
+
+  if (!value.isCurrent && startYear && endYear && isValidYearString(startYear) && isValidYearString(endYear)) {
+    if (Number(endYear) < Number(startYear)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['endYear'],
+        message: 'End year cannot be earlier than the start year',
+      })
+    }
+  }
 })
 
 export const EmploymentSchema = z.object({
@@ -119,6 +169,62 @@ export const EmploymentSchema = z.object({
   startDate: DraftDateSchema,
   endDate: DraftDateSchema,
   isEmployed: OptionalBooleanLikeSchema,
+}).superRefine((value, context) => {
+  const startDate = typeof value.startDate === 'string' ? value.startDate : ''
+  const endDate = typeof value.endDate === 'string' ? value.endDate : ''
+  const isEmployed = value.isEmployed === true
+
+  if (startDate && !isValidEmploymentPeriodString(startDate)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['startDate'],
+      message: 'Start date must be a valid month',
+    })
+  }
+
+  if (!startDate) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['startDate'],
+      message: 'Start date is required',
+    })
+  }
+
+  if (startDate && isValidEmploymentPeriodString(startDate)) {
+    const start = parseMonthAsDateUTC(startDate.slice(0, 7))
+    const today = new Date()
+    const currentMonthUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))
+
+    if (start.getTime() > currentMonthUTC.getTime()) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['startDate'],
+        message: 'Start date cannot be in the future',
+      })
+    }
+
+    if (!isEmployed) {
+      if (!endDate) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['endDate'],
+          message: 'End date is required when not currently employed',
+        })
+      } else if (!isValidEmploymentPeriodString(endDate)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['endDate'],
+          message: 'End date must be a valid month',
+        })
+      } else if (parseMonthAsDateUTC(endDate.slice(0, 7)).getTime() < start.getTime()) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['endDate'],
+          message: 'End date cannot be earlier than the start date',
+        })
+      }
+    }
+  }
 })
 
 export const TrainingSchema = z.object({
@@ -162,6 +268,36 @@ export const JobApplicationSchema = z.object({
   agreesToDrugTest: z.boolean().optional(),
   agreedToTerms: CoerceBooleanSchema.optional(),
   dateAgreed: z.string().optional(),
+}).superRefine((value, context) => {
+  if (value.availableStartDate && !isValidDateString(value.availableStartDate)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['availableStartDate'],
+      message: 'Available start date must be a valid date',
+    })
+  }
+
+  if (value.JobApplicationDate && !isValidDateString(value.JobApplicationDate)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['JobApplicationDate'],
+      message: 'Job application date must be a valid date',
+    })
+  }
+
+  if (
+    value.availableStartDate &&
+    value.JobApplicationDate &&
+    isValidDateString(value.availableStartDate) &&
+    isValidDateString(value.JobApplicationDate) &&
+    parseDateUTC(value.availableStartDate).getTime() < parseDateUTC(value.JobApplicationDate).getTime()
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['availableStartDate'],
+      message: 'Available start date cannot be earlier than the job application date',
+    })
+  }
 })
 
 export const ApplicationPayloadSchema = z.object({

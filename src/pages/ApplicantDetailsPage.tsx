@@ -84,13 +84,13 @@ const ApplicantDetailsPage = ({
   }
 
   const isValidPhoneNumber = (value: string) => {
-    if (!value) return false
-    const digits = value.replace(/\D/g, '')
-    // Mobile (Philippines): starts with 09 and 11 digits total
-    const mobile = /^09\d{9}$/.test(digits)
-    // Landline: 7 to 10 digits (allow leading 0 area codes)
-    const landline = /^0?\d{7,10}$/.test(digits) && !/^09\d{9}$/.test(digits)
-    return mobile || landline
+    if (!value) return false;
+    
+    // Strip all non-numeric characters first
+    const digits = value.replace(/\D/g, '');
+    
+    // Mobile (Philippines): strictly starts with 09 and is exactly 11 digits total
+    return /^09\d{9}$/.test(digits);
   }
 
   const navigate = useNavigate()
@@ -213,7 +213,7 @@ const renderEducation = (index: number) => {
             <SmartCombobox
               fetchUrl="/backend/api/schools/list.php"
               valueName={entry.schoolName}
-              valueId={entry.schoolId ?? null}
+              valueId={entry.schoolId != null ? String(entry.schoolId) : null}
               placeholder="e.g., Polytechnic University of the Philippines"
               onChange={({ name, id, location }) => {
                 updateEducation(index, 'schoolName', name)
@@ -280,7 +280,7 @@ const renderEducation = (index: number) => {
             <p className={entry.isCurrent ? 'disabled-label' : 'required-asterisk'}>End Year</p>
             <input
               type="number"
-              min={1900}
+              min={entry.startYear ? Number(entry.startYear) : 1900}
               max={currentYear}
               minLength={4}
               maxLength={4}
@@ -330,7 +330,7 @@ const renderEducation = (index: number) => {
               <SmartCombobox
                 fetchUrl="/backend/api/companies/list.php"
                 valueName={entry.companyName}
-                valueId={entry.companyId ?? null}
+                valueId={entry.companyId != null ? String(entry.companyId) : null}
                 placeholder="e.g., Tech Solutions Inc."
                 onChange={({ name, id, location }) => {
                   updateEmployment(index, 'companyName', name)
@@ -338,7 +338,7 @@ const renderEducation = (index: number) => {
                   if (location !== undefined) {
                     updateEmployment(index, 'companyAddress', location || '')
                   }
-                }}
+                }} 
               />
             </label>
             <label>
@@ -361,6 +361,13 @@ const renderEducation = (index: number) => {
                 }
                 placeholder="e.g., 0917 123 4567"
               />
+              {entry.companyPhone ? (
+                  isValidPhoneNumber(entry.companyPhone) ? (
+                    <p style={{ color: '#15803d', fontSize: '0.85rem', marginTop: 6 }}>Valid phone number</p>
+                  ) : (
+                    <p style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: 6 }}>Invalid phone number. Use mobile (09XXXXXXXXX).</p>
+                  )
+                ) : null}
               {renderFieldError(`employmentHistory.${index}.companyPhone`)}
             </label>
             <label>
@@ -468,7 +475,7 @@ const renderEducation = (index: number) => {
               <SmartCombobox
                 fetchUrl="/backend/api/trainings/list.php"
                 valueName={entry.trainingTitle}
-                valueId={entry.trainingId ?? null}
+                valueId={entry.trainingId != null ? String(entry.trainingId) : null}
                 placeholder="e.g., Agile Scrum Mastery"
                 onChange={({ name, id, description, duration }) => {
                   updateTraining(index, 'trainingTitle', name)
@@ -575,7 +582,7 @@ const renderEducation = (index: number) => {
               <SmartCombobox
                 fetchUrl="/backend/api/certificates/list.php"
                 valueName={entry.certificateName}
-                valueId={entry.certificateId ?? null}
+                valueId={entry.certificateId != null ? String(entry.certificateId) : null}
                 placeholder="e.g., AWS Certified Developer"
                 onChange={({ name, id, location, validityMonths }) => {
                   updateCertificate(index, 'certificateName', name)
@@ -709,7 +716,7 @@ const renderEducation = (index: number) => {
                   isValidPhoneNumber(applicant.phoneNumber) ? (
                     <p style={{ color: '#15803d', fontSize: '0.85rem', marginTop: 6 }}>Valid phone number</p>
                   ) : (
-                    <p style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: 6 }}>Invalid phone number. Use mobile (09XXXXXXXXX) or landline.</p>
+                    <p style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: 6 }}>Invalid phone number. Use mobile (09XXXXXXXXX).</p>
                   )
                 ) : null}
               </div>
