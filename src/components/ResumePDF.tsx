@@ -36,6 +36,20 @@ const getDisplayValue = (value: string | null | undefined, fallback = "Not provi
 }
 const getYesNo = (value: boolean | null) => value === null ? "Not provided" : (value ? "Yes" : "No");
 
+const formatEducationRange = (entry: Education) => {
+  if (!entry.startYear && !entry.endYear && !entry.isCurrent) return 'Not provided'
+  const endLabel = entry.isCurrent ? 'Present' : (entry.endYear || '')
+  if (entry.startYear && endLabel) return `${entry.startYear} - ${endLabel}`
+  return entry.startYear || endLabel || 'Not provided'
+}
+
+const formatEmploymentRange = (entry: EmploymentHistory) => {
+  if (!entry.startDate && !entry.endDate && !entry.isEmployed) return 'Not provided'
+  const endLabel = entry.isEmployed ? 'Present' : (entry.endDate || '')
+  if (entry.startDate && endLabel) return `${entry.startDate} - ${endLabel}`
+  return entry.startDate || endLabel || 'Not provided'
+}
+
 export const ResumePDF = ({ applicant, jobApplication, education, employmentHistory, references, trainings, certificates, previewFont, resumeTemplate }: ResumePDFProps) => {
   const fontFamily = getFontFamily(previewFont);
 
@@ -255,11 +269,15 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                       {education.map((entry, idx) => (
                         <View key={idx} style={styles.lineBlock} wrap={false}>
                           <View style={styles.lineFlex}>
-                            <Text style={styles.bold}>{entry.degreeReceived ? entry.degreeReceived : "Degree - "}</Text>
-                            <Text>{entry.startYear || entry.endYear ? `${entry.startYear || ''}${entry.startYear && entry.endYear ? ' - ' : ''}${entry.endYear || ''}` : 'Not provided'}</Text>
+                            <Text style={styles.bold}>
+                              {entry.degreeReceived
+                                ? `${entry.degreeReceived}${entry.programName ? ` in ${entry.programName}` : ''}`
+                                : "Degree"}
+                            </Text>
+                            <Text>{formatEducationRange(entry)}</Text>
                           </View>
                           <View style={styles.lineFlex}>
-                            <Text style={styles.italic}>{entry.schoolName ? entry.schoolName : "School - "}</Text>
+                            <Text style={styles.italic}>{entry.schoolName ? entry.schoolName : "School"}</Text>
                             <Text>{entry.schoolLocation ? entry.schoolLocation : "Location - "}</Text>
                           </View>
                         </View>
@@ -283,7 +301,7 @@ export const ResumePDF = ({ applicant, jobApplication, education, employmentHist
                           <View style={styles.lineFlex}>
                             <Text style={styles.italic}>{entry.companyName}</Text>
                             <View style={styles.lineFlex}>
-                              <Text style={styles.italic}>{entry.startDate || 'N/A'} - {entry.endDate || 'N/A'}</Text>
+                              <Text style={styles.italic}>{formatEmploymentRange(entry)}</Text>
                             </View>
                           </View>
                           <View style={styles.lineFlex}>

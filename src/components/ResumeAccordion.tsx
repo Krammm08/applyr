@@ -135,6 +135,26 @@ const ResumeAccordion = ({
   onSyncRequest,
 }: ResumeAccordionPropsWithSync) => {
   const today = new Date().toISOString().split('T')[0]
+  const formatEducationRange = (entry: Education) => {
+    if (!entry.startYear && !entry.endYear && !entry.isCurrent) return ''
+    const endLabel = entry.isCurrent ? 'Present' : (entry.endYear || '')
+    if (entry.startYear && endLabel) return `${entry.startYear} - ${endLabel}`
+    return entry.startYear || endLabel
+  }
+  const formatEmploymentRange = (entry: EmploymentHistory) => {
+    if (!entry.startDate && !entry.endDate && !entry.isEmployed) return ''
+    const endLabel = entry.isEmployed ? 'Present' : (entry.endDate || '')
+    if (entry.startDate && endLabel) return `${entry.startDate} - ${endLabel}`
+    return entry.startDate || endLabel
+  }
+  const formatEducationTitle = (entry: Education, index: number) => {
+    if (entry.degreeReceived) {
+      const program = entry.programName ? ` in ${entry.programName}` : ''
+      const school = entry.schoolName ? ` at ${entry.schoolName}` : ''
+      return `${entry.degreeReceived}${program}${school}`
+    }
+    return entry.schoolName || `Education ${index + 1}`
+  }
   const [activePanel, setActivePanel] = useState<ActivePanel>({ type: 'list' })
   const [dragEducationIndex, setDragEducationIndex] = useState<number | null>(null)
   const [dragEmploymentIndex, setDragEmploymentIndex] = useState<number | null>(null)
@@ -358,8 +378,8 @@ const ResumeAccordion = ({
               ☰
             </button>
             <button type="button" className="row-main" onClick={() => openEducation(index)}>
-              <span className="row-title">{entry.schoolName || `Education ${index + 1}`}</span>
-              <span className="row-subtitle">{entry.degreeReceived || 'Degree'}</span>
+              <span className="row-title">{formatEducationTitle(entry, index)}</span>
+              <span className="row-subtitle">{formatEducationRange(entry) || 'Years not set'}</span>
             </button>
             <button type="button" className="row-remove" onClick={() => removeEducation(index)}>
               Remove
@@ -392,7 +412,10 @@ const ResumeAccordion = ({
             </button>
             <button type="button" className="row-main" onClick={() => openEmployment(index)}>
               <span className="row-title">{entry.companyName || `Employment ${index + 1}`}</span>
-              <span className="row-subtitle">{entry.workPosition || 'Role'}</span>
+              <span className="row-subtitle">
+                {entry.workPosition || 'Role'}
+                {formatEmploymentRange(entry) ? ` • ${formatEmploymentRange(entry)}` : ''}
+              </span>
             </button>
             <button type="button" className="row-remove" onClick={() => removeEmployment(index)}>
               Remove

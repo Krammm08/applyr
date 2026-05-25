@@ -218,6 +218,28 @@ export const CertificateSchema = z.object({
   dateIssued: ValidatedDateSchema,
 })
 
+const CertificatesArraySchema = z.array(CertificateSchema).superRefine((certs, ctx) => {
+  const seen = new Map<string, number>()
+  certs.forEach((cert, index) => {
+    const certId = cert.certificateId ? String(cert.certificateId).trim() : ''
+    const name = cert.certificateName ? cert.certificateName.trim().toLowerCase() : ''
+    const authority = cert.issuingAuthority ? cert.issuingAuthority.trim().toLowerCase() : ''
+    const key = certId ? `id:${certId}` : name ? `name:${name}|${authority}` : ''
+
+    if (!key) return
+    if (seen.has(key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [index, 'certificateName'],
+        message: 'You already added this certificate. Please update its dates instead.',
+      })
+      return
+    }
+
+    seen.set(key, index)
+  })
+})
+
 export const ReferenceSchema = z.object({
   referenceId: z.string().optional(),
   referenceName: z.string().min(1, 'Reference name is required'),
@@ -255,7 +277,7 @@ export const ApplicationPayloadSchema = z.object({
   education: z.array(EducationSchema).optional(),
   employmentHistory: z.array(EmploymentSchema).optional(),
   trainings: z.array(TrainingSchema).optional(),
-  certificates: z.array(CertificateSchema).optional(),
+  certificates: CertificatesArraySchema.optional(),
   references: z.array(ReferenceSchema).optional(),
   resumeSettings: z.object({ resumeTemplate: z.string().optional(), previewFont: z.string().optional() }).optional(),
 })
