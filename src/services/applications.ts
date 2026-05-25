@@ -8,12 +8,13 @@ const API_BASE_URL =
 const requestJson = async <T>(
   url: string,
   body: Record<string, unknown>,
+  token?: string,
 ) => {
-  console.log(body)
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(body),
   })
@@ -32,12 +33,28 @@ const requestJsonWithMethod = async <T>(
   url: string,
   method: 'DELETE' | 'POST',
   body?: Record<string, unknown>,
+  token?: string,
 ) => {
-  const response = await fetch(url, {
+  // For DELETE requests, append token as query parameter as a fallback
+  // (some servers strip Authorization header for DELETE requests)
+  let finalUrl = url
+  if (method === 'DELETE' && token && !url.includes('token=')) {
+    const separator = url.includes('?') ? '&' : '?'
+    finalUrl = `${url}${separator}token=${encodeURIComponent(token)}`
+  }
+
+  const headers: Record<string, string> = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+  
+  // Only include Content-Type if there's a body
+  if (body) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  const response = await fetch(finalUrl, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   })
 
@@ -60,28 +77,31 @@ type ApplicationPayload = {
   resumeSettings?: ApplicationResumeSettings
 }
 
-export const createApplication = async (payload: ApplicationPayload) =>
-  requestJson(`${API_BASE_URL}/api/applications/create.php`, payload)
+export const createApplication = async (payload: ApplicationPayload, token?: string) =>
+  requestJson(`${API_BASE_URL}/api/applications/create.php`, payload, token)
 
-export const updateApplication = async (payload: ApplicationPayload) =>
-  requestJson(`${API_BASE_URL}/api/applications/update.php`, payload)
+export const updateApplication = async (payload: ApplicationPayload, token?: string) =>
+  requestJson(`${API_BASE_URL}/api/applications/update.php`, payload, token)
 
-export const deleteApplication = async (jobApplicationId: string) =>
-  requestJson(`${API_BASE_URL}/api/applications/delete.php`, { jobApplicationId })
+export const deleteApplication = async (jobApplicationId: string, token?: string) =>
+  requestJson(`${API_BASE_URL}/api/applications/delete.php`, { jobApplicationId }, token)
 
-export const deleteNestedItem = async (type: 'education' | 'employment' | 'certificate' | 'training' | 'reference', id: string) =>
+export const deleteNestedItem = async (type: 'education' | 'employment' | 'certificate' | 'training' | 'reference', id: string, token?: string) =>
   requestJsonWithMethod(
     `${API_BASE_URL}/api/delete_nested.php?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`,
     'DELETE',
+    undefined,
+    token,
   )
 
-export const getResumeSettings = async (jobApplicationId: string) =>
+export const getResumeSettings = async (jobApplicationId: string, token?: string) =>
   requestJson<{ success: boolean; data: ApplicationResumeSettings }>(
     `${API_BASE_URL}/api/applications/get.php`,
-    { jobApplicationId }
+    { jobApplicationId },
+    token,
   )
 
-export const getApplicationsForApplicant = async (applicantId: string) =>
+export const getApplicationsForApplicant = async (applicantId: string, token?: string) =>
   requestJson<{
     success: boolean
     data: Array<
@@ -91,4 +111,4 @@ export const getApplicationsForApplicant = async (applicantId: string) =>
         settingsLastUpdated?: string
       }
     >
-  }>(`${API_BASE_URL}/api/applications/list.php`, { applicantId })
+  }>(`${API_BASE_URL}/api/applications/list.php`, { applicantId }, token)

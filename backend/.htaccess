@@ -1,5 +1,8 @@
 RewriteEngine On
 
+# --- TO ENABLE AUTHORIZATION ---
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
 # Allow CORS preflight requests to be handled properly
 RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule ^(.*)$ index.php [QSA,L]

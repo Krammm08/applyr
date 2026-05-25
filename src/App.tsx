@@ -127,15 +127,15 @@ const sanitizeEducation = (items: Education[]) =>
       ...item,
       schoolName: item.schoolName.trim(),
       schoolLocation: item.schoolLocation.trim(),
-      startYear: item.startYear.trim(),
-      endYear: item.endYear.trim(),
+      startYear: (item.startYear?.trim() || null) as string | null,
+      endYear: (item.endYear?.trim() || null) as string | null,
       degreeReceived: item.degreeReceived.trim(),
       programName: item.programName.trim(),
     }))
     .filter((item) =>
-      [item.schoolName, item.schoolLocation, item.startYear, item.endYear, item.degreeReceived, item.programName].every(
+      [item.schoolName, item.schoolLocation, item.degreeReceived, item.programName].every(
         (value) => !isBlank(value),
-      ),
+      ) && (item.startYear || item.endYear),
     )
 
 const sanitizeEmployment = (items: EmploymentHistory[]) =>
@@ -451,7 +451,7 @@ function App() {
 
   const deleteJobApplication = async (jobApplicationId: string) => {
     try {
-      await deleteApplication(jobApplicationId)
+      await deleteApplication(jobApplicationId, authSession?.token)
       setJobApplications((prev) => {
         const remaining = prev.filter((app) => app.JobApplicationId !== jobApplicationId)
         if (jobApplicationId === activeJobApplicationId) {
@@ -514,7 +514,7 @@ function App() {
     }
 
     try {
-      await deleteNestedItem('education', entry.educationId)
+      await deleteNestedItem('education', entry.educationId, authSession?.token)
       setEducation((prev) => prev.filter((_, current) => current !== index))
       touchActiveApplication()
     } catch (error) {
@@ -529,7 +529,7 @@ function App() {
     }
 
     try {
-      await deleteNestedItem('employment', entry.EmploymentHistoryId)
+      await deleteNestedItem('employment', entry.EmploymentHistoryId, authSession?.token)
       setEmploymentHistory((prev) => prev.filter((_, current) => current !== index))
       touchActiveApplication()
     } catch (error) {
@@ -581,7 +581,7 @@ function App() {
     }
 
     try {
-      await deleteNestedItem('reference', entry.referenceId)
+      await deleteNestedItem('reference', entry.referenceId, authSession?.token)
       updateNestedArray('references', (arr) => arr.filter((_, i) => i !== index))
     } catch (error) {
       console.error('Failed to delete reference:', error)
@@ -595,7 +595,7 @@ function App() {
     }
 
     try {
-      await deleteNestedItem('training', entry.trainingId)
+      await deleteNestedItem('training', entry.trainingId, authSession?.token)
       updateNestedArray('trainings', (arr) => arr.filter((_, i) => i !== index))
     } catch (error) {
       console.error('Failed to delete training:', error)
@@ -609,7 +609,7 @@ function App() {
     }
 
     try {
-      await deleteNestedItem('certificate', entry.certificateId)
+      await deleteNestedItem('certificate', entry.certificateId, authSession?.token)
       updateNestedArray('certificates', (arr) => arr.filter((_, i) => i !== index))
     } catch (error) {
       console.error('Failed to delete certificate:', error)
@@ -825,7 +825,7 @@ function App() {
 
     void Promise.all([
       getApplicantProfile(authSession.user.id),
-      getApplicationsForApplicant(authSession.user.id),
+      getApplicationsForApplicant(authSession.user.id, authSession.token),
     ])
       .then(([profile, response]) => {
         if (cancelled) {
@@ -927,7 +927,7 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [authSession?.user.id])
+  }, [authSession?.user.id, authSession?.token])
 
   useEffect(() => {
     if (!jobApplications.some((application) => application.JobApplicationId === activeJobApplicationId)) {
@@ -1030,7 +1030,7 @@ function App() {
 
     // Otherwise, try to fetch from backend (for authenticated users)
     if (authSession?.token) {
-      void getResumeSettings(activeJobApplicationId)
+      void getResumeSettings(activeJobApplicationId, authSession.token)
         .then((res) => {
           if (res.data) {
             const settings = res.data
@@ -1079,11 +1079,11 @@ function App() {
     try {
       if (profilePayload) {
         ProfileSyncSchema.parse(profilePayload)
-        await syncApplicantProfile(profilePayload)
+        await syncApplicantProfile(profilePayload, authSession?.token)
       }
       if (applicationPayload) {
         ApplicationSyncSchema.parse(applicationPayload)
-        await syncApplication(applicationPayload)
+        await syncApplication(applicationPayload, authSession?.token)
       }
     } catch (err) {
       console.warn('Validation failed for payload, aborting sync:', err)

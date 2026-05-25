@@ -51,6 +51,17 @@ const DraftDateSchema = z.preprocess((value) => {
   z.null(),
 ]))
 
+const YearSchema = z.preprocess((value) => {
+  if (value === '' || value === undefined) {
+    return null
+  }
+
+  return value
+}, z.union([
+  z.string().regex(/^[0-9]{4}$/, { message: 'Year must be 4 digits' }),
+  z.null(),
+]))
+
 export const ApplicantSchema = z.object({
   applicantId: z.string().optional(),
   applicantName: z.string().min(1),
@@ -67,8 +78,8 @@ export const EducationSchema = z.object({
   schoolId: z.string().optional(),
   schoolName: z.string().min(1),
   schoolLocation: z.string().min(1),
-  startYear: z.string().regex(/^[0-9]{4}$/),
-  endYear: z.string().regex(/^[0-9]{4}$/),
+  startYear: YearSchema,
+  endYear: YearSchema,
   degreeReceived: z.string().min(1),
   programName: z.string().min(1),
 })

@@ -35,8 +35,8 @@ export type Education = {
   schoolId?: string
   schoolName: string
   schoolLocation: string
-  startYear: string
-  endYear: string
+  startYear: string | null
+  endYear: string | null
   degreeReceived: string
   programName: string
 }

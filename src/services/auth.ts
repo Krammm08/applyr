@@ -56,10 +56,17 @@ const endpoints = {
   syncProfile: '/api/auth/sync_profile.php',
 }
 
-const requestJson = async <T>(url: string, body: Record<string, unknown>) => {
+const requestJson = async <T>(
+  url: string,
+  body: Record<string, unknown>,
+  token?: string,
+) => {
   const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
   })
 
@@ -137,10 +144,11 @@ export const updateApplicantProfile = async (payloadBody: {
   return payload.data
 }
 
-export const syncApplicantProfile = async (payloadBody: ProfileSyncPayload) => {
+export const syncApplicantProfile = async (payloadBody: ProfileSyncPayload, token?: string) => {
   const payload = await requestJson<{ success: boolean; data?: ProfileSyncPayload }>(
     `${API_BASE_URL}${endpoints.syncProfile}`,
     payloadBody,
+    token,
   )
 
   if (!payload.success) {

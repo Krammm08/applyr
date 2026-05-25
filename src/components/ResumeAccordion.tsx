@@ -717,7 +717,7 @@ const ResumeAccordion = ({
               max={currentYear}
               minLength={4}
               maxLength={4}
-              value={entry.startYear}
+              value={entry.startYear || ''}
               onChange={(event) => updateEducation(index, 'startYear', event.target.value)}
               onKeyDown={blockInvalidNumberKey}
               placeholder="e.g., 2019"
@@ -761,7 +761,7 @@ const ResumeAccordion = ({
               max={currentYear}
               minLength={4}
               maxLength={4}
-              value={entry.endYear}
+              value={entry.endYear || ''}
               onChange={(event) => updateEducation(index, 'endYear', event.target.value)}
               onKeyDown={blockInvalidNumberKey}
               placeholder="e.g., 2023"

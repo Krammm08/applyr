@@ -13,7 +13,12 @@ function requireAuthUser(): array
         ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] 
         ?? (function_exists('apache_request_headers') ? (apache_request_headers()['Authorization'] ?? '') : '');
 
-    // 2. \S+ ensures we capture at least one non-whitespace character, removing the need for a secondary empty check
+    // 2. Try query parameter as fallback (for DELETE requests where headers might not pass through)
+    if (!$header && isset($_GET['token'])) {
+        $header = 'Bearer ' . trim($_GET['token']);
+    }
+
+    // 3. \S+ ensures we capture at least one non-whitespace character, removing the need for a secondary empty check
     if (!preg_match('/Bearer\s+(\S+)/i', $header, $matches)) {
         jsonResponse(401, [
             'success' => false,
