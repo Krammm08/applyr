@@ -1,4 +1,4 @@
-import type { Applicant, JobApplication, Education, EmploymentHistory, Training, Certificate, ApplicationResumeSettings } from '../types'
+import type { JobApplication, ApplicationResumeSettings, ApplicantReference } from '../types'
 
 const API_BASE_URL = 
 // 'http://localhost:8000'
@@ -28,16 +28,35 @@ const requestJson = async <T>(
   return payload
 }
 
+const requestJsonWithMethod = async <T>(
+  url: string,
+  method: 'DELETE' | 'POST',
+  body?: Record<string, unknown>,
+) => {
+  const response = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+
+  const payload = (await response.json()) as T
+
+  if (!response.ok || !(payload as { success?: boolean }).success) {
+    const message = (payload as { message?: string }).message || 'Request failed'
+    throw new Error(message)
+  }
+
+  return payload
+}
+
 type ApplicationPayload = {
-  applicant: Applicant
   jobApplication: JobApplication & {
     agreesToDrugTest?: boolean
     JobApplicationStatus?: string
   }
-  education?: Education[]
-  employmentHistory?: EmploymentHistory[]
-  trainings?: Array<Omit<Training, 'trainingId'> & { trainingId?: string | null }>
-  certificates?: Array<Omit<Certificate, 'certificateId'> & { certificateId?: string | null }>
+  references?: ApplicantReference[]
   resumeSettings?: ApplicationResumeSettings
 }
 
@@ -49,6 +68,12 @@ export const updateApplication = async (payload: ApplicationPayload) =>
 
 export const deleteApplication = async (jobApplicationId: string) =>
   requestJson(`${API_BASE_URL}/api/applications/delete.php`, { jobApplicationId })
+
+export const deleteNestedItem = async (type: 'education' | 'employment' | 'certificate' | 'training' | 'reference', id: string) =>
+  requestJsonWithMethod(
+    `${API_BASE_URL}/api/delete_nested.php?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`,
+    'DELETE',
+  )
 
 export const getResumeSettings = async (jobApplicationId: string) =>
   requestJson<{ success: boolean; data: ApplicationResumeSettings }>(

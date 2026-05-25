@@ -53,19 +53,19 @@ type ResumeAccordionProps = {
   updateTraining: (index: number, field: keyof Training, value: string) => void
   updateCertificate: (index: number, field: keyof Certificate, value: string) => void
   addEducation: () => void
-  removeEducation: (index: number) => void
+  removeEducation: (index: number) => Promise<void>
   reorderEducation: (fromIndex: number, toIndex: number) => void
   addEmployment: () => void
-  removeEmployment: (index: number) => void
+  removeEmployment: (index: number) => Promise<void>
   reorderEmployment: (fromIndex: number, toIndex: number) => void
   addReference: () => void
-  removeReference: (index: number) => void
+  removeReference: (index: number) => Promise<void>
   reorderReferences: (fromIndex: number, toIndex: number) => void
   addTraining: () => void
-  removeTraining: (index: number) => void
+  removeTraining: (index: number) => Promise<void>
   reorderTrainings: (fromIndex: number, toIndex: number) => void
   addCertificate: () => void
-  removeCertificate: (index: number) => void
+  removeCertificate: (index: number) => Promise<void>
   reorderCertificates: (fromIndex: number, toIndex: number) => void
   handleResumeUpload: (file: File | null) => Promise<void>
   onDeleteJobApplication: (jobApplicationId: string) => Promise<void>
@@ -257,6 +257,7 @@ const ResumeAccordion = ({
 
   const renderList = () => (
     <div className="section-list" aria-label="Resume sections">
+
       <div className="section-group">
         <h3 className="section-group-title">Resume Builder</h3>
         <Accordion title="Resume Template" subtitle="Choose your resume template" onToggle={() => toggleSection('template')} isOpen={openSections.includes('template')}>
@@ -412,11 +413,13 @@ const ResumeAccordion = ({
             >
               ☰
             </button>
-            <button type="button" className="row-main" onClick={() => openEducation(index)}>
+            <button type="button" className="row-main" 
+              >
+            {/* onClick={() => openEducation(index)} */}
               <span className="row-title">{formatEducationTitle(entry, index)}</span>
               <span className="row-subtitle">{formatEducationRange(entry) || 'Years not set'}</span>
             </button>
-            <button type="button" className="row-remove" onClick={() => removeEducation(index)}>
+            <button type="button" className="row-remove" onClick={() => { void removeEducation(index) }}>
               Remove
             </button>
           </div>
@@ -452,7 +455,7 @@ const ResumeAccordion = ({
                 {formatEmploymentRange(entry) ? ` • ${formatEmploymentRange(entry)}` : ''}
               </span>
             </button>
-            <button type="button" className="row-remove" onClick={() => removeEmployment(index)}>
+            <button type="button" className="row-remove" onClick={() => { void removeEmployment(index) }}>
               Remove
             </button>
           </div>
@@ -484,7 +487,7 @@ const ResumeAccordion = ({
               <span className="row-title">{entry.referenceName || `Reference ${index + 1}`}</span>
               <span className="row-subtitle">{entry.referenceCompany || 'Company'}</span>
             </button>
-            <button type="button" className="row-remove" onClick={() => removeReference(index)}>
+            <button type="button" className="row-remove" onClick={() => { void removeReference(index) }}>
               Remove
             </button>
           </div>
@@ -516,7 +519,7 @@ const ResumeAccordion = ({
               <span className="row-title">{entry.trainingTitle || `Training ${index + 1}`}</span>
               <span className="row-subtitle">{entry.trainingInstructor || 'Instructor'}</span>
             </button>
-            <button type="button" className="row-remove" onClick={() => removeTraining(index)}>
+            <button type="button" className="row-remove" onClick={() => { void removeTraining(index) }}>
               Remove
             </button>
           </div>
@@ -548,7 +551,7 @@ const ResumeAccordion = ({
               <span className="row-title">{entry.certificateName || `Certificate ${index + 1}`}</span>
               <span className="row-subtitle">{entry.issuingAuthority || 'Authority'}</span>
             </button>
-            <button type="button" className="row-remove" onClick={() => removeCertificate(index)}>
+            <button type="button" className="row-remove" onClick={() => { void removeCertificate(index) }}>
               Remove
             </button>
           </div>
@@ -624,7 +627,6 @@ const ResumeAccordion = ({
   const renderTemplate = () => (
     <div className="section-editor">
       {renderEditorHeader('Resume Template', () => setActivePanel({ type: 'list' }))}
-      
     </div>
   )
 
@@ -773,7 +775,7 @@ const ResumeAccordion = ({
           type="button"
           className="remove-button"
           onClick={() => {
-            removeEducation(index)
+            void removeEducation(index)
             setActivePanel({ type: 'list' })
           }}
         >
@@ -893,7 +895,7 @@ const ResumeAccordion = ({
           type="button"
           className="remove-button"
           onClick={() => {
-            removeEmployment(index)
+            void removeEmployment(index)
             setActivePanel({ type: 'list' })
           }}
         >
@@ -968,7 +970,7 @@ const ResumeAccordion = ({
           type="button"
           className="remove-button"
           onClick={() => {
-            removeReference(index)
+            void removeReference(index)
             setActivePanel({ type: 'list' })
           }}
         >
@@ -1075,7 +1077,7 @@ const ResumeAccordion = ({
           type="button"
           className="remove-button"
           onClick={() => {
-            removeTraining(index)
+            void removeTraining(index)
             setActivePanel({ type: 'list' })
           }}
         >
@@ -1173,7 +1175,7 @@ const ResumeAccordion = ({
           type="button"
           className="remove-button"
           onClick={() => {
-            removeCertificate(index)
+            void removeCertificate(index)
             setActivePanel({ type: 'list' })
           }}
         >

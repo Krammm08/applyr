@@ -7,6 +7,8 @@ import type {
   Education,
   EmploymentHistory,
   JobApplication,
+  Training,
+  Certificate,
 } from '../types'
 
 export type AuthSession = {
@@ -23,6 +25,8 @@ type HomePageProps = {
   resumeSettingsMap: Record<string, ApplicationResumeSettings>
   education: Education[]
   employmentHistory: EmploymentHistory[]
+  trainings: Training[]
+  certificates: Certificate[]
   authSession: AuthSession | null
   isAuthLoading: boolean
   authError: string
@@ -68,6 +72,8 @@ const HomePage = ({
   resumeSettingsMap,
   education,
   employmentHistory,
+  trainings,
+  certificates,
   authSession,
   isAuthLoading,
   authError,
@@ -209,6 +215,12 @@ const HomePage = ({
           <h1>Track and craft your applications</h1>
         </div>
         <div className="home-actions">
+          <Link
+            to="/profile"
+            className="secondary-button"
+          >
+            ← My Profile
+          </Link>
           <button
             type="button"
             className="primary-button"
@@ -267,8 +279,8 @@ const HomePage = ({
                       education={education}
                       employmentHistory={employmentHistory}
                       references={application.references || []}
-                      trainings={application.trainings || []}
-                      certificates={application.certificates || []}
+                      trainings={trainings}
+                      certificates={certificates}
                       previewFont={appPreviewFont}
                       resumeTemplate={appResumeTemplate}
                     />

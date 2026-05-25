@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import ResumeAccordion from '../components/ResumeAccordion'
 import ResumePreview from '../components/ResumePreview'
 import type { ValidationError } from '../utils/validation'
@@ -31,25 +31,25 @@ export type EditorPageProps = {
   onResumeTemplateChange: (template: 'classic' | 'compact' | 'modern') => void
   updateApplicant: <K extends keyof Applicant>(key: K, value: Applicant[K]) => void
   updateApplication: <K extends keyof JobApplication>(key: K, value: JobApplication[K]) => void
-  updateEducation: (index: number, field: keyof Education, value: string) => void
-  updateEmployment: (index: number, field: keyof EmploymentHistory, value: string) => void
+  updateEducation: <K extends keyof Education>(index: number, field: K, value: Education[K]) => void
+  updateEmployment: <K extends keyof EmploymentHistory>(index: number, field: K, value: EmploymentHistory[K]) => void
   updateReference: (index: number, field: keyof ApplicantReference, value: string) => void
   updateTraining: (index: number, field: keyof Training, value: string) => void
   updateCertificate: (index: number, field: keyof Certificate, value: string) => void
   addEducation: () => void
-  removeEducation: (index: number) => void
+  removeEducation: (index: number) => Promise<void>
   reorderEducation: (fromIndex: number, toIndex: number) => void
   addEmployment: () => void
-  removeEmployment: (index: number) => void
+  removeEmployment: (index: number) => Promise<void>
   reorderEmployment: (fromIndex: number, toIndex: number) => void
   addReference: () => void
-  removeReference: (index: number) => void
+  removeReference: (index: number) => Promise<void>
   reorderReferences: (fromIndex: number, toIndex: number) => void
   addTraining: () => void
-  removeTraining: (index: number) => void
+  removeTraining: (index: number) => Promise<void>
   reorderTrainings: (fromIndex: number, toIndex: number) => void
   addCertificate: () => void
-  removeCertificate: (index: number) => void
+  removeCertificate: (index: number) => Promise<void>
   reorderCertificates: (fromIndex: number, toIndex: number) => void
   handleResumeUpload: (file: File | null) => Promise<void>
   validationErrors: ValidationError[]
@@ -157,6 +157,11 @@ const EditorPage = ({
 
   return (
     <div className="page-shell">
+      <div className="editor-header" style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #e0e0e0' }}>
+        <Link to="/profile" className="btn-secondary" style={{ fontSize: '0.9rem' }}>
+          ← Edit Profile
+        </Link>
+      </div>
       <div className="resume-shell">
         <section className="panel panel-scroll">
           <ResumeAccordion

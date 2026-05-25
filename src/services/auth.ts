@@ -1,3 +1,5 @@
+import type { Education, EmploymentHistory, Certificate, Training } from '../types'
+
 export type AuthUser = {
   id: string
   email: string
@@ -18,6 +20,18 @@ export type ApplicantProfilePayload = {
   linkedInUrl: string
   citizenshipStatus: string
   hasCriminalHistory: boolean | null
+  education?: Education[]
+  employmentHistory?: EmploymentHistory[]
+  certificates?: Certificate[]
+  trainings?: Training[]
+}
+
+export type ProfileSyncPayload = {
+  applicantId: string
+  education?: Array<Omit<Education, 'educationId'> & { educationId?: string | null }>
+  employmentHistory?: Array<Omit<EmploymentHistory, 'EmploymentHistoryId'> & { EmploymentHistoryId?: string | null }>
+  certificates?: Array<Omit<Certificate, 'certificateId'> & { certificateId?: string | null }>
+  trainings?: Array<Omit<Training, 'trainingId'> & { trainingId?: string | null }>
 }
 
 type AuthResponse = {
@@ -39,6 +53,7 @@ const endpoints = {
   register: '/api/auth/register.php',
   profile: '/api/auth/profile.php',
   updateProfile: '/api/auth/update_profile.php',
+  syncProfile: '/api/auth/sync_profile.php',
 }
 
 const requestJson = async <T>(url: string, body: Record<string, unknown>) => {
@@ -120,4 +135,17 @@ export const updateApplicantProfile = async (payloadBody: {
   }
 
   return payload.data
+}
+
+export const syncApplicantProfile = async (payloadBody: ProfileSyncPayload) => {
+  const payload = await requestJson<{ success: boolean; data?: ProfileSyncPayload }>(
+    `${API_BASE_URL}${endpoints.syncProfile}`,
+    payloadBody,
+  )
+
+  if (!payload.success) {
+    throw new Error('Unable to sync applicant profile')
+  }
+
+  return payload
 }

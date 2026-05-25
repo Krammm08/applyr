@@ -68,7 +68,8 @@ const Navbar = ({ authSession, onLogout }: NavbarProps) => {
                 </div>
                 <div className="dropdown-divider"></div>
                 <Link to="/" className="dropdown-item">Dashboard</Link>
-                <Link to="/applicant" className="dropdown-item">Applicant</Link>
+                <Link to="/profile" className="dropdown-item">My Profile</Link>
+                <Link to="/applicant" className="dropdown-item">Applicant Info</Link>
                 <div className="dropdown-divider"></div>
                 <button 
                   type="button" 

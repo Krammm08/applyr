@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import './styles/App.scss'
 
+import ApplicantDetailsPage from './pages/ApplicantDetailsPage'
 import ApplicantEditPage from './pages/ApplicantEditPage'
 import EditorPage from './pages/EditorPage'
 import HomePage from './pages/HomePage'
 import NewApplicationModal from './components/modals/NewApplicationModal'
 import Navbar from './components/Navbar'
-import { updateApplication as syncApplication, getResumeSettings, deleteApplication, getApplicationsForApplicant } from './services/applications'
-import { ZodError } from 'zod'
-import { ApplicationPayloadSchema } from './validation/applicationSchema'
+import { updateApplication as syncApplication, getResumeSettings, deleteApplication, deleteNestedItem, getApplicationsForApplicant } from './services/applications'
+import { ApplicationSyncSchema, ProfileSyncSchema } from './validation/applicationSchema'
 import { validateApplicationPayload, type ValidationError } from './utils/validation'
-import { loginUser, registerUser, getApplicantProfile, updateApplicantProfile, type AuthSession } from './services/auth'
+import { loginUser, registerUser, getApplicantProfile, syncApplicantProfile, updateApplicantProfile, type AuthSession } from './services/auth'
 import type {
   Applicant,
   ApplicantReference,
@@ -107,6 +107,100 @@ const createCertificate = (): Certificate => ({
   validityMonths: '',
   dateIssued: '',
 })
+
+const isBlank = (value: unknown) => value === '' || value === null || value === undefined
+
+const trimValue = (value: unknown) => (typeof value === 'string' ? value.trim() : value)
+
+const normalizeMonthDate = (value: unknown) => {
+  const trimmed = trimValue(value)
+  if (typeof trimmed !== 'string') return trimmed
+  if (/^\d{4}-\d{2}$/.test(trimmed)) {
+    return `${trimmed}-01`
+  }
+  return trimmed
+}
+
+const sanitizeEducation = (items: Education[]) =>
+  items
+    .map((item) => ({
+      ...item,
+      schoolName: item.schoolName.trim(),
+      schoolLocation: item.schoolLocation.trim(),
+      startYear: item.startYear.trim(),
+      endYear: item.endYear.trim(),
+      degreeReceived: item.degreeReceived.trim(),
+      programName: item.programName.trim(),
+    }))
+    .filter((item) =>
+      [item.schoolName, item.schoolLocation, item.startYear, item.endYear, item.degreeReceived, item.programName].every(
+        (value) => !isBlank(value),
+      ),
+    )
+
+const sanitizeEmployment = (items: EmploymentHistory[]) =>
+  items
+    .map((item) => ({
+      ...item,
+      companyName: item.companyName.trim(),
+      companyAddress: (item.companyAddress || '').trim(),
+      companyPhone: (item.companyPhone || '').trim(),
+      workPosition: item.workPosition.trim(),
+      reasonForLeaving: typeof item.reasonForLeaving === 'string' ? item.reasonForLeaving.trim() : item.reasonForLeaving,
+      startDate: normalizeMonthDate(item.startDate) as string,
+      endDate: item.isEmployed ? '' : (normalizeMonthDate(item.endDate) as string),
+    }))
+    .filter((item) => {
+      const baseValid = [item.companyName, item.workPosition, item.startDate].every((value) => !isBlank(value))
+      if (!baseValid) return false
+      if (item.isEmployed) return true
+      return !isBlank(item.endDate)
+    })
+
+const sanitizeTrainings = (items: Training[]) =>
+  items
+    .map((item) => ({
+      ...item,
+      trainingTitle: item.trainingTitle.trim(),
+      trainingDescription: item.trainingDescription.trim(),
+      trainingInstructor: item.trainingInstructor.trim(),
+      trainingDurationHours: trimValue(item.trainingDurationHours) as string,
+      completionDate: trimValue(item.completionDate) as string | undefined,
+    }))
+    .filter((item) =>
+      [item.trainingTitle, item.trainingInstructor, item.trainingDurationHours, item.completionDate].every(
+        (value) => !isBlank(value),
+      ),
+    )
+
+const sanitizeCertificates = (items: Certificate[]) =>
+  items
+    .map((item) => ({
+      ...item,
+      certificateName: item.certificateName.trim(),
+      issuingAuthority: item.issuingAuthority.trim(),
+      validityMonths: trimValue(item.validityMonths) as string,
+      dateIssued: trimValue(item.dateIssued) as string | undefined,
+    }))
+    .filter((item) =>
+      [item.certificateName, item.issuingAuthority, item.validityMonths, item.dateIssued].every((value) => !isBlank(value)),
+    )
+
+const sanitizeReferences = (items: ApplicantReference[]) =>
+  items
+    .map((item) => ({
+      ...item,
+      referenceName: item.referenceName.trim(),
+      referenceTitle: item.referenceTitle.trim(),
+      referenceCompany: item.referenceCompany.trim(),
+      referencePhone: item.referencePhone.trim(),
+      referenceEmail: item.referenceEmail.trim(),
+    }))
+    .filter((item) =>
+      [item.referenceName, item.referenceTitle, item.referenceCompany, item.referencePhone, item.referenceEmail].some(
+        (value) => !isBlank(value),
+      ),
+    )
 
 const moveItem = <T,>(items: T[], fromIndex: number, toIndex: number) => {
   const next = [...items]
@@ -380,7 +474,7 @@ function App() {
       prev.map((item, current) => {
         if (current !== index) return item
         const next = { ...item, [field]: value }
-        if (field === 'isCurrent' && value === true) {
+        if (field === 'isCurrent' && (value as boolean)) {
           next.endYear = ''
         }
         return next
@@ -413,16 +507,34 @@ function App() {
     touchActiveApplication()
   }
 
-  const removeEducation = (index: number) => {
-    setEducation((prev) => (prev.filter((_, current) => current !== index)))
-    touchActiveApplication()
+  const removeEducation = async (index: number) => {
+    const entry = education[index]
+    if (!entry) {
+      return
+    }
+
+    try {
+      await deleteNestedItem('education', entry.educationId)
+      setEducation((prev) => prev.filter((_, current) => current !== index))
+      touchActiveApplication()
+    } catch (error) {
+      console.error('Failed to delete education:', error)
+    }
   }
 
-  const removeEmployment = (index: number) => {
-    setEmploymentHistory((prev) =>
-      prev.filter((_, current) => current !== index),
-    )
-    touchActiveApplication()
+  const removeEmployment = async (index: number) => {
+    const entry = employmentHistory[index]
+    if (!entry) {
+      return
+    }
+
+    try {
+      await deleteNestedItem('employment', entry.EmploymentHistoryId)
+      setEmploymentHistory((prev) => prev.filter((_, current) => current !== index))
+      touchActiveApplication()
+    } catch (error) {
+      console.error('Failed to delete employment history:', error)
+    }
   }
 
   const reorderEducation = (fromIndex: number, toIndex: number) => {
@@ -462,134 +574,87 @@ function App() {
   const addTraining = () => updateNestedArray('trainings', arr => [...arr, createTraining()])
   const addCertificate = () => updateNestedArray('certificates', arr => [...arr, createCertificate()])
 
-  const removeReference = (index: number) => updateNestedArray('references', arr => arr.filter((_, i) => i !== index))
-  const removeTraining = (index: number) => updateNestedArray('trainings', arr => arr.filter((_, i) => i !== index))
-  const removeCertificate = (index: number) => updateNestedArray('certificates', arr => arr.filter((_, i) => i !== index))
+  const removeReference = async (index: number) => {
+    const entry = activeJobApplication?.references?.[index]
+    if (!entry) {
+      return
+    }
+
+    try {
+      await deleteNestedItem('reference', entry.referenceId)
+      updateNestedArray('references', (arr) => arr.filter((_, i) => i !== index))
+    } catch (error) {
+      console.error('Failed to delete reference:', error)
+    }
+  }
+
+  const removeTraining = async (index: number) => {
+    const entry = activeJobApplication?.trainings?.[index]
+    if (!entry) {
+      return
+    }
+
+    try {
+      await deleteNestedItem('training', entry.trainingId)
+      updateNestedArray('trainings', (arr) => arr.filter((_, i) => i !== index))
+    } catch (error) {
+      console.error('Failed to delete training:', error)
+    }
+  }
+
+  const removeCertificate = async (index: number) => {
+    const entry = activeJobApplication?.certificates?.[index]
+    if (!entry) {
+      return
+    }
+
+    try {
+      await deleteNestedItem('certificate', entry.certificateId)
+      updateNestedArray('certificates', (arr) => arr.filter((_, i) => i !== index))
+    } catch (error) {
+      console.error('Failed to delete certificate:', error)
+    }
+  }
 
   const reorderReferences = (fromIndex: number, toIndex: number) => updateNestedArray('references', arr => moveItem(arr, fromIndex, toIndex))
   const reorderTrainings = (fromIndex: number, toIndex: number) => updateNestedArray('trainings', arr => moveItem(arr, fromIndex, toIndex))
   const reorderCertificates = (fromIndex: number, toIndex: number) => updateNestedArray('certificates', arr => moveItem(arr, fromIndex, toIndex))
 
-  const isBlank = (value: unknown) => value === '' || value === null || value === undefined
-
-  const trimValue = (value: unknown) => (typeof value === 'string' ? value.trim() : value)
-
-  const normalizeMonthDate = (value: unknown) => {
-    const trimmed = trimValue(value)
-    if (typeof trimmed !== 'string') return trimmed
-    if (/^\d{4}-\d{2}$/.test(trimmed)) {
-      return `${trimmed}-01`
-    }
-    return trimmed
-  }
-
-  const sanitizeEducation = (items: Education[]) =>
-    items
-      .map((item) => ({
-        ...item,
-        schoolName: item.schoolName.trim(),
-        schoolLocation: item.schoolLocation.trim(),
-        startYear: item.startYear.trim(),
-        endYear: item.endYear.trim(),
-        degreeReceived: item.degreeReceived.trim(),
-        programName: item.programName.trim(),
-      }))
-      .filter((item) =>
-        [item.schoolName, item.schoolLocation, item.startYear, item.endYear, item.degreeReceived, item.programName].every(
-          (value) => !isBlank(value),
-        ),
-      )
-
-  const sanitizeEmployment = (items: EmploymentHistory[]) =>
-    items
-      .map((item) => ({
-        ...item,
-        companyName: item.companyName.trim(),
-        companyAddress: (item.companyAddress || '').trim(),
-        companyPhone: (item.companyPhone || '').trim(),
-        workPosition: item.workPosition.trim(),
-        reasonForLeaving: typeof item.reasonForLeaving === 'string' ? item.reasonForLeaving.trim() : item.reasonForLeaving,
-        startDate: normalizeMonthDate(item.startDate) as string,
-        endDate: item.isEmployed ? null : (normalizeMonthDate(item.endDate) as string | null),
-      }))
-      .filter((item) => {
-        const baseValid = [item.companyName, item.workPosition, item.startDate].every((value) => !isBlank(value))
-        if (!baseValid) return false
-        if (item.isEmployed) return true
-        return !isBlank(item.endDate)
-      })
-
-  const sanitizeTrainings = (items: Training[]) =>
-    items
-      .map((item) => ({
-        ...item,
-        trainingTitle: item.trainingTitle.trim(),
-        trainingDescription: item.trainingDescription.trim(),
-        trainingInstructor: item.trainingInstructor.trim(),
-        trainingDurationHours: trimValue(item.trainingDurationHours) as string,
-        completionDate: trimValue(item.completionDate) as string | undefined,
-      }))
-      .filter((item) =>
-        [item.trainingTitle, item.trainingInstructor, item.trainingDurationHours, item.completionDate].every(
-          (value) => !isBlank(value),
-        ),
-      )
-
-  const sanitizeCertificates = (items: Certificate[]) =>
-    items
-      .map((item) => ({
-        ...item,
-        certificateName: item.certificateName.trim(),
-        issuingAuthority: item.issuingAuthority.trim(),
-        validityMonths: trimValue(item.validityMonths) as string,
-        dateIssued: trimValue(item.dateIssued) as string | undefined,
-      }))
-      .filter((item) =>
-        [item.certificateName, item.issuingAuthority, item.validityMonths, item.dateIssued].every((value) => !isBlank(value)),
-      )
-
-  const sanitizeReferences = (items: ApplicantReference[]) =>
-    items
-      .map((item) => ({
-        ...item,
-        referenceName: item.referenceName.trim(),
-        referenceTitle: item.referenceTitle.trim(),
-        referenceCompany: item.referenceCompany.trim(),
-        referencePhone: item.referencePhone.trim(),
-        referenceEmail: item.referenceEmail.trim(),
-      }))
-      .filter((item) =>
-        [item.referenceName, item.referenceTitle, item.referenceCompany, item.referencePhone, item.referenceEmail].some(
-          (value) => !isBlank(value),
-        ),
-      )
-
   const activeJobApplication =
     jobApplications.find((application) => application.JobApplicationId === activeJobApplicationId) ??
     jobApplications[0]
 
-  const buildSyncPayload = () => {
+  const buildProfileSyncPayload = useCallback(() => {
+    if (!applicant.applicantId) {
+      return null
+    }
+
+    return {
+      applicantId: applicant.applicantId,
+      education: sanitizeEducation(education),
+      employmentHistory: sanitizeEmployment(employmentHistory),
+      trainings: sanitizeTrainings(activeJobApplication?.trainings || []).map((item) => ({
+        ...item,
+        trainingId: item.trainingId || null,
+      })),
+      certificates: sanitizeCertificates(activeJobApplication?.certificates || []).map((item) => ({
+        ...item,
+        certificateId: item.certificateId || null,
+      })),
+    }
+  }, [activeJobApplication, applicant.applicantId, education, employmentHistory])
+
+  const buildApplicationSyncPayload = useCallback(() => {
     if (!activeJobApplication) {
       return null
     }
 
     return {
-      applicant,
       jobApplication: {
         ...activeJobApplication,
         agreesToDrugTest: applicant.agreesToDrugTest ?? false,
         JobApplicationStatus: 'Pending',
       },
-      education: sanitizeEducation(education),
-      employmentHistory: sanitizeEmployment(employmentHistory),
-      trainings: sanitizeTrainings(activeJobApplication.trainings || []).map((item) => ({
-        ...item,
-        trainingId: item.trainingId || null,
-      })),
-      certificates: sanitizeCertificates(activeJobApplication.certificates || []).map((item) => ({
-        ...item,
-        certificateId: item.certificateId || null,
-      })),
       references: sanitizeReferences(activeJobApplication.references || []),
       resumeSettings: {
         JobApplicationId: activeJobApplicationId,
@@ -597,7 +662,13 @@ function App() {
         previewFont,
       },
     }
-  }
+  }, [
+    activeJobApplication,
+    activeJobApplicationId,
+    applicant,
+    previewFont,
+    resumeTemplate,
+  ])
 
   const authenticated = Boolean(authSession?.token)
   const isValidationBlocked = validationErrors.length > 0
@@ -761,12 +832,58 @@ function App() {
           return
         }
 
+        const backendEducation = (profile.education || []).map((entry) => ({
+          educationId: entry.educationId || entry.id || createId(),
+          applicantId: entry.applicantId || profile.applicantId,
+          schoolId: entry.schoolId || '',
+          schoolName: entry.schoolName || '',
+          schoolLocation: entry.schoolLocation || '',
+          startYear: entry.startYear || '',
+          endYear: entry.endYear || '',
+          degreeReceived: entry.degreeReceived || '',
+          programName: entry.programName || '',
+        }))
+
+        const backendEmployment = (profile.employmentHistory || []).map((entry) => ({
+          EmploymentHistoryId: entry.EmploymentHistoryId || entry.id || createId(),
+          applicantId: entry.applicantId || profile.applicantId,
+          companyName: entry.companyName || '',
+          companyId: entry.companyId || '',
+          companyAddress: entry.companyAddress || '',
+          companyPhone: entry.companyPhone || '',
+          workPosition: entry.workPosition || '',
+          reasonForLeaving: entry.reasonForLeaving ?? null,
+          startDate: entry.startDate || '',
+          endDate: entry.endDate || '',
+          isEmployed: entry.isEmployed ?? false,
+        }))
+
+        const backendTrainings = (profile.trainings || []).map((entry) => ({
+          trainingId: entry.trainingId || createId(),
+          trainingTitle: entry.trainingTitle || '',
+          trainingDescription: entry.trainingDescription || '',
+          trainingInstructor: entry.trainingInstructor || '',
+          trainingDurationHours: entry.trainingDurationHours || '',
+          completionDate: entry.completionDate || '',
+        }))
+
+        const backendCertificates = (profile.certificates || []).map((entry) => ({
+          certificateId: entry.certificateId || createId(),
+          certificateName: entry.certificateName || '',
+          issuingAuthority: entry.issuingAuthority || '',
+          validityMonths: entry.validityMonths || '',
+          dateIssued: entry.dateIssued || '',
+        }))
+
         setApplicant((prev) => ({
           ...prev,
           ...profile,
           applicantId: profile.applicantId,
           hasCriminalHistory: profile.hasCriminalHistory ?? null,
         }))
+
+        setEducation(backendEducation)
+        setEmploymentHistory(backendEmployment)
 
         const backendApplications = response.data.map((application) =>
           normalizeBackendApplication(application, profile.applicantId),
@@ -779,8 +896,8 @@ function App() {
             return {
               ...application,
               references: local?.references ?? application.references ?? [],
-              trainings: local?.trainings ?? application.trainings ?? [],
-              certificates: local?.certificates ?? application.certificates ?? [],
+              trainings: local?.trainings ?? application.trainings ?? backendTrainings,
+              certificates: local?.certificates ?? application.certificates ?? backendCertificates,
             }
           })
         })
@@ -932,34 +1049,42 @@ function App() {
   }, [activeJobApplicationId, authSession?.token, resumeSettingsMap])
 
   useEffect(() => {
-    const payload = buildSyncPayload()
-    if (!payload) {
+    const profilePayload = buildProfileSyncPayload()
+    const applicationPayload = buildApplicationSyncPayload()
+    if (!profilePayload && !applicationPayload) {
       setValidationErrors([])
       return
     }
 
-    const validation = validateApplicationPayload(payload, ApplicationPayloadSchema)
-    setValidationErrors(validation.success ? [] : validation.errors)
-  }, [
-    applicant,
-    activeJobApplication,
-    activeJobApplicationId,
-    education,
-    employmentHistory,
-    previewFont,
-    resumeTemplate,
-  ])
+    const profileValidation = profilePayload
+      ? validateApplicationPayload(profilePayload, ProfileSyncSchema)
+      : { success: true, errors: [] as ValidationError[] }
+    const applicationValidation = applicationPayload
+      ? validateApplicationPayload(applicationPayload, ApplicationSyncSchema)
+      : { success: true, errors: [] as ValidationError[] }
+    setValidationErrors([
+      ...(profileValidation.success ? [] : profileValidation.errors),
+      ...(applicationValidation.success ? [] : applicationValidation.errors),
+    ])
+  }, [buildProfileSyncPayload, buildApplicationSyncPayload])
 
   // Explicit sync function - only called when user downloads PDF, exits to home, or on session recovery
   const syncCurrentApplication = async () => {
-    const payload = buildSyncPayload()
-    if (!payload) {
+    const profilePayload = buildProfileSyncPayload()
+    const applicationPayload = buildApplicationSyncPayload()
+    if (!profilePayload && !applicationPayload) {
       return
     }
 
-    console.log('syncPayload:', payload)
     try {
-      ApplicationPayloadSchema.parse(payload)
+      if (profilePayload) {
+        ProfileSyncSchema.parse(profilePayload)
+        await syncApplicantProfile(profilePayload)
+      }
+      if (applicationPayload) {
+        ApplicationSyncSchema.parse(applicationPayload)
+        await syncApplication(applicationPayload)
+      }
     } catch (err) {
       console.warn('Validation failed for payload, aborting sync:', err)
       // if (err instanceof ZodError) {
@@ -973,8 +1098,6 @@ function App() {
       // }
       return
     }
-
-    await syncApplication(payload).catch(console.error)
   }
 
   const handleResumeUpload = async (file: File | null) => {
@@ -1059,6 +1182,8 @@ function App() {
                 resumeSettingsMap={resumeSettingsMap}
                 education={education}
                 employmentHistory={employmentHistory}
+                trainings={activeJobApplication?.trainings || []}
+                certificates={activeJobApplication?.certificates || []}
                 authSession={authSession}
                 isAuthLoading={isAuthLoading}
                 authError={authError}
@@ -1149,6 +1274,44 @@ function App() {
           element={
             authenticated ? (
               <ApplicantEditPage applicant={applicant} authSession={authSession} onSaveApplicant={saveApplicantProfile} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            authenticated ? (
+              <ApplicantDetailsPage
+                applicant={applicant}
+                education={education}
+                employmentHistory={employmentHistory}
+                trainings={activeJobApplication?.trainings || []}
+                certificates={activeJobApplication?.certificates || []}
+                uploadState={uploadState}
+                updateApplicant={updateApplicant}
+                updateEducation={updateEducation}
+                updateEmployment={updateEmployment}
+                updateTraining={updateTraining}
+                updateCertificate={updateCertificate}
+                addEducation={addEducation}
+                removeEducation={removeEducation}
+                reorderEducation={reorderEducation}
+                addEmployment={addEmployment}
+                removeEmployment={removeEmployment}
+                reorderEmployment={reorderEmployment}
+                addTraining={addTraining}
+                removeTraining={removeTraining}
+                reorderTrainings={reorderTrainings}
+                addCertificate={addCertificate}
+                removeCertificate={removeCertificate}
+                reorderCertificates={reorderCertificates}
+                handleResumeUpload={handleResumeUpload}
+                validationErrors={validationErrors}
+                isValidationBlocked={isValidationBlocked}
+                onSyncRequest={syncCurrentApplication}
+              />
             ) : (
               <Navigate to="/" replace />
             )
