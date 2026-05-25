@@ -459,35 +459,6 @@ const ResumeAccordion = ({
         )}
       </Accordion>
 
-      <Accordion title="References" subtitle="People who can vouch for your character" onToggle={() => toggleSection('references')} isOpen={openSections.includes('references')}>
-        {references.map((entry, index) => (
-          <div
-            className={`section-row${dragReferenceIndex === index ? ' is-dragging' : ''}`}
-            key={entry.referenceId}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={() => handleDrop(dragReferenceIndex, index, reorderReferences, setDragReferenceIndex)}
-          >
-            <button
-              type="button"
-              className="row-handle"
-              aria-label={`Reorder reference ${index + 1}`}
-              draggable
-              onDragStart={(event) => handleDragStart(setDragReferenceIndex, index, event)}
-              onDragEnd={() => handleDragEnd(setDragReferenceIndex)}
-            >
-              ☰
-            </button>
-            <button type="button" className="row-main">
-              <span className="row-title">{entry.referenceName || `Reference ${index + 1}`}</span>
-              <span className="row-subtitle">{entry.referenceCompany || 'Company'}</span>
-            </button>
-          </div>
-        ))}
-        { references.length === 0 && (
-          <p style={{ padding: '8px 12px', fontStyle: 'italic', color: '#555' }}>No references added yet.</p>
-        )}
-      </Accordion>
-
       <Accordion title="Trainings" subtitle="Workshops and courses" onToggle={() => toggleSection('trainings')} isOpen={openSections.includes('trainings')}>
         {trainings.map((entry, index) => (
           <div
@@ -544,6 +515,51 @@ const ResumeAccordion = ({
         { certificates.length === 0 && (
           <p style={{ padding: '8px 12px', fontStyle: 'italic', color: '#555' }}>No certificates added yet.</p>
         )}
+      </Accordion>
+
+            <Accordion title="References" subtitle="People who can vouch for your character" onToggle={() => toggleSection('references')} isOpen={openSections.includes('references')}>
+        {references.map((entry, index) => (
+          <div
+            className={`section-row${dragReferenceIndex === index ? ' is-dragging' : ''}`}
+            key={entry.referenceId}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={() => handleDrop(dragReferenceIndex, index, reorderReferences, setDragReferenceIndex)}
+          >
+            <button
+              type="button"
+              className="row-handle"
+              aria-label={`Reorder reference ${index + 1}`}
+              draggable
+              onDragStart={(event) => handleDragStart(setDragReferenceIndex, index, event)}
+              onDragEnd={() => handleDragEnd(setDragReferenceIndex)}
+            >
+              ☰
+            </button>
+            <button type="button" className="row-main" onClick={() => setActivePanel({ type: 'reference', index })}>
+              <span className="row-title">{entry.referenceName || `Reference ${index + 1}`}</span>
+              <span className="row-subtitle">{entry.referenceCompany || 'Company'}</span>
+            </button>
+            <button className="row-remove" onClick={() => {
+              removeReference(index)
+            }}>
+              Remove
+            </button>
+          </div>
+        ))}
+        {/* { references.length === 0 && (
+          <p style={{ padding: '8px 12px', fontStyle: 'italic', color: '#555' }}>No references added yet.</p>
+        )} */}
+        <button
+                type="button"
+                className="add-button small"
+                onClick={() => {
+                  addReference()
+                  setActivePanel({ type: 'reference', index: references.length })
+                }}
+                disabled={isValidationBlocked}
+              >
+                + Add
+              </button>
       </Accordion>
 
       <SectionRow
@@ -1192,10 +1208,10 @@ const ResumeAccordion = ({
       {activePanel.type === 'contact' ? renderContact() : null}
       {activePanel.type === 'education' ? renderEducation(activePanel.index) : null}
       {activePanel.type === 'employment' ? renderEmployment(activePanel.index) : null}
-      {activePanel.type === 'reference' ? renderReference(activePanel.index) : null}
       {activePanel.type === 'training' ? renderTraining(activePanel.index) : null}
       {activePanel.type === 'certificate' ? renderCertificate(activePanel.index) : null}
       {activePanel.type === 'compliance' ? renderCompliance() : null}
+      {activePanel.type === 'reference' ? renderReference(activePanel.index) : null}
     </div>
   )
 }
