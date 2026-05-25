@@ -419,14 +419,11 @@ const ResumeAccordion = ({
               <span className="row-title">{formatEducationTitle(entry, index)}</span>
               <span className="row-subtitle">{formatEducationRange(entry) || 'Years not set'}</span>
             </button>
-            <button type="button" className="row-remove" onClick={() => { void removeEducation(index) }}>
-              Remove
-            </button>
           </div>
         ))}
-            <button type="button" className="add-button small" onClick={() =>{addEducation(); setActivePanel({ type: 'education', index: education.length })}}>
-              + Add
-            </button>
+            { education.length === 0 && (
+              <p style={{ padding: '8px 12px', fontStyle: 'italic', color: '#555' }}>No education entries added yet.</p>
+            )}
           </div>
         </Accordion>
     
@@ -448,21 +445,18 @@ const ResumeAccordion = ({
               >
               ☰
             </button>
-            <button type="button" className="row-main" onClick={() => openEmployment(index)}>
+            <button type="button" className="row-main">
               <span className="row-title">{entry.companyName || `Employment ${index + 1}`}</span>
               <span className="row-subtitle">
                 {entry.workPosition || 'Role'}
                 {formatEmploymentRange(entry) ? ` • ${formatEmploymentRange(entry)}` : ''}
               </span>
             </button>
-            <button type="button" className="row-remove" onClick={() => { void removeEmployment(index) }}>
-              Remove
-            </button>
           </div>
         ))}
-        <button type="button" className="add-button small" onClick={() => { addEmployment(); setActivePanel({ type: 'employment', index: employmentHistory.length }); }}>
-            + Add
-          </button>
+        { employmentHistory.length === 0 && (
+          <p style={{ padding: '8px 12px', fontStyle: 'italic', color: '#555' }}>No employment entries added yet.</p>
+        )}
       </Accordion>
 
       <Accordion title="References" subtitle="People who can vouch for your character" onToggle={() => toggleSection('references')} isOpen={openSections.includes('references')}>
@@ -483,18 +477,15 @@ const ResumeAccordion = ({
             >
               ☰
             </button>
-            <button type="button" className="row-main" onClick={() => openReference(index)}>
+            <button type="button" className="row-main">
               <span className="row-title">{entry.referenceName || `Reference ${index + 1}`}</span>
               <span className="row-subtitle">{entry.referenceCompany || 'Company'}</span>
             </button>
-            <button type="button" className="row-remove" onClick={() => { void removeReference(index) }}>
-              Remove
-            </button>
           </div>
         ))}
-        <button type="button" className="add-button small" onClick={() => { addReference(); setActivePanel({ type: 'reference', index: references.length }); }}>
-            + Add
-          </button>
+        { references.length === 0 && (
+          <p style={{ padding: '8px 12px', fontStyle: 'italic', color: '#555' }}>No references added yet.</p>
+        )}
       </Accordion>
 
       <Accordion title="Trainings" subtitle="Workshops and courses" onToggle={() => toggleSection('trainings')} isOpen={openSections.includes('trainings')}>
@@ -515,18 +506,15 @@ const ResumeAccordion = ({
             >
               ☰
             </button>
-            <button type="button" className="row-main" onClick={() => openTraining(index)}>
+            <button type="button" className="row-main">
               <span className="row-title">{entry.trainingTitle || `Training ${index + 1}`}</span>
               <span className="row-subtitle">{entry.trainingInstructor || 'Instructor'}</span>
             </button>
-            <button type="button" className="row-remove" onClick={() => { void removeTraining(index) }}>
-              Remove
-            </button>
           </div>
         ))}
-        <button type="button" className="add-button small" onClick={() => { addTraining(); setActivePanel({ type: 'training', index: trainings.length }); }}>
-          + Add
-        </button>
+        { trainings.length === 0 && (
+          <p style={{ padding: '8px 12px', fontStyle: 'italic', color: '#555' }}>No trainings added yet.</p>
+        )}
       </Accordion>
 
       <Accordion title="Certificates" subtitle="Accreditations and achievements" onToggle={() => toggleSection('certificates')} isOpen={openSections.includes('certificates')}>
@@ -547,18 +535,15 @@ const ResumeAccordion = ({
             >
               ☰
             </button>
-            <button type="button" className="row-main" onClick={() => openCertificate(index)}>
+            <button type="button" className="row-main">
               <span className="row-title">{entry.certificateName || `Certificate ${index + 1}`}</span>
               <span className="row-subtitle">{entry.issuingAuthority || 'Authority'}</span>
             </button>
-            <button type="button" className="row-remove" onClick={() => { void removeCertificate(index) }}>
-              Remove
-            </button>
           </div>
         ))}
-        <button type="button" className="add-button small" onClick={() => { addCertificate(); setActivePanel({ type: 'certificate', index: certificates.length }); }}>
-          + Add
-        </button>
+        { certificates.length === 0 && (
+          <p style={{ padding: '8px 12px', fontStyle: 'italic', color: '#555' }}>No certificates added yet.</p>
+        )}
       </Accordion>
 
       <SectionRow
@@ -771,16 +756,6 @@ const ResumeAccordion = ({
             {renderFieldError(`education.${index}.endYear`)}
           </label>
         </div>
-        <button
-          type="button"
-          className="remove-button"
-          onClick={() => {
-            void removeEducation(index)
-            setActivePanel({ type: 'list' })
-          }}
-        >
-          Remove Education
-        </button>
       </div>
     )
   }
@@ -891,16 +866,6 @@ const ResumeAccordion = ({
             {renderFieldError(`employmentHistory.${index}.endDate`)}
           </label>
         </div>
-        <button
-          type="button"
-          className="remove-button"
-          onClick={() => {
-            void removeEmployment(index)
-            setActivePanel({ type: 'list' })
-          }}
-        >
-          Remove Employment
-        </button>
       </div>
     )
   }
@@ -966,16 +931,6 @@ const ResumeAccordion = ({
             {renderFieldError(`references.${index}.referenceEmail`)}
           </label>
         </div>
-        <button
-          type="button"
-          className="remove-button"
-          onClick={() => {
-            void removeReference(index)
-            setActivePanel({ type: 'list' })
-          }}
-        >
-          Remove Reference
-        </button>
       </div>
     )
   }
@@ -1073,16 +1028,6 @@ const ResumeAccordion = ({
             {renderFieldError(`trainings.${index}.completionDate`)}
           </label>
         </div>
-        <button
-          type="button"
-          className="remove-button"
-          onClick={() => {
-            void removeTraining(index)
-            setActivePanel({ type: 'list' })
-          }}
-        >
-          Remove Training
-        </button>
       </div>
     )
   }
@@ -1171,16 +1116,6 @@ const ResumeAccordion = ({
             {renderFieldError(`certificates.${index}.dateIssued`)}
           </label>
         </div>
-        <button
-          type="button"
-          className="remove-button"
-          onClick={() => {
-            void removeCertificate(index)
-            setActivePanel({ type: 'list' })
-          }}
-        >
-          Remove Certificate
-        </button>
       </div>
     )
   }

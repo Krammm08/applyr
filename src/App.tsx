@@ -112,9 +112,25 @@ const isBlank = (value: unknown) => value === '' || value === null || value === 
 
 const trimValue = (value: unknown) => (typeof value === 'string' ? value.trim() : value)
 
+const toBooleanFlag = (value: unknown): boolean =>
+  value === true || value === 1 || value === '1' || value === 'true'
+
+const normalizeMonthInput = (value: unknown) => {
+  const trimmed = trimValue(value)
+  if (typeof trimmed !== 'string') return ''
+  const dateMatch = trimmed.match(/^(\d{4}-\d{2})-\d{2}$/)
+  if (dateMatch) {
+    return dateMatch[1]
+  }
+  return trimmed
+}
+
 const normalizeMonthDate = (value: unknown) => {
   const trimmed = trimValue(value)
   if (typeof trimmed !== 'string') return trimmed
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed
+  }
   if (/^\d{4}-\d{2}$/.test(trimmed)) {
     return `${trimmed}-01`
   }
@@ -142,6 +158,7 @@ const sanitizeEmployment = (items: EmploymentHistory[]) =>
   items
     .map((item) => ({
       ...item,
+      isEmployed: toBooleanFlag(item.isEmployed),
       companyName: item.companyName.trim(),
       companyAddress: (item.companyAddress || '').trim(),
       companyPhone: (item.companyPhone || '').trim(),
@@ -351,9 +368,9 @@ function App() {
       companyPhone: entry.companyPhone || '',
       workPosition: entry.workPosition || '',
       reasonForLeaving: entry.reasonForLeaving ?? null,
-      startDate: entry.startDate || '',
-      endDate: entry.endDate || '',
-      isEmployed: entry.isEmployed ?? false,
+      startDate: normalizeMonthInput(entry.startDate),
+      endDate: normalizeMonthInput(entry.endDate),
+      isEmployed: toBooleanFlag(entry.isEmployed),
     }))
 
   const initialResumeSettingsMap = loadScopedValue<Record<string, ApplicationResumeSettings>>(
@@ -805,9 +822,9 @@ function App() {
         companyPhone: entry.companyPhone || '',
         workPosition: entry.workPosition || '',
         reasonForLeaving: entry.reasonForLeaving ?? null,
-        startDate: entry.startDate || '',
-        endDate: entry.endDate || '',
-        isEmployed: entry.isEmployed ?? false,
+        startDate: normalizeMonthInput(entry.startDate),
+        endDate: normalizeMonthInput(entry.endDate),
+        isEmployed: toBooleanFlag(entry.isEmployed),
       })),
     )
     setResumeSettingsMap(loadScopedValue<Record<string, ApplicationResumeSettings>>(nextScope, 'resumeSettings', {}))
@@ -853,9 +870,9 @@ function App() {
           companyPhone: entry.companyPhone || '',
           workPosition: entry.workPosition || '',
           reasonForLeaving: entry.reasonForLeaving ?? null,
-          startDate: entry.startDate || '',
-          endDate: entry.endDate || '',
-          isEmployed: entry.isEmployed ?? false,
+          startDate: normalizeMonthInput(entry.startDate),
+          endDate: normalizeMonthInput(entry.endDate),
+          isEmployed: toBooleanFlag(entry.isEmployed),
         }))
 
         const backendTrainings = (profile.trainings || []).map((entry) => ({

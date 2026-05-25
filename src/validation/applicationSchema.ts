@@ -40,6 +40,26 @@ const CoerceBooleanSchema = z.preprocess((value) => {
   return value
 }, z.boolean())
 
+const OptionalBooleanLikeSchema = z.preprocess((value) => {
+  if (value === '' || value === undefined || value === null) {
+    return undefined
+  }
+
+  if (value === true || value === false) {
+    return value
+  }
+
+  if (value === 1 || value === '1' || value === 'true') {
+    return true
+  }
+
+  if (value === 0 || value === '0' || value === 'false') {
+    return false
+  }
+
+  return value
+}, z.boolean().optional())
+
 const DraftDateSchema = z.preprocess((value) => {
   if (value === '' || value === undefined) {
     return null
@@ -94,7 +114,7 @@ export const EmploymentSchema = z.object({
   reasonForLeaving: z.string().optional().nullable(),
   startDate: DraftDateSchema,
   endDate: DraftDateSchema,
-  isEmployed: z.boolean().optional(),
+  isEmployed: OptionalBooleanLikeSchema,
 })
 
 export const TrainingSchema = z.object({
