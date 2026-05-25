@@ -29,7 +29,8 @@ export const validateApplicationPayload = (
     }
   } catch (error) {
     if (error instanceof ZodError) {
-      const errors: ValidationError[] = error.errors.map((err) => ({
+      const zodIssues = error.issues ?? error.errors ?? []
+      const errors: ValidationError[] = zodIssues.map((err) => ({
         field: err.path.join('.') || 'unknown',
         message: err.message,
         path: err.path,

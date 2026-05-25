@@ -10,6 +10,7 @@ import type {
   Certificate,
 } from '../types'
 import {Accordion, SectionRow} from './Accordion'
+import type { ValidationError } from '../utils/validation'
 
 type UploadState = {
   uploading: boolean
@@ -68,6 +69,8 @@ type ResumeAccordionProps = {
   reorderCertificates: (fromIndex: number, toIndex: number) => void
   handleResumeUpload: (file: File | null) => Promise<void>
   onDeleteJobApplication: (jobApplicationId: string) => Promise<void>
+  validationErrors: ValidationError[]
+  isValidationBlocked: boolean
 }
 
 // Custom hook to sync state with localStorage
@@ -132,6 +135,8 @@ const ResumeAccordion = ({
   removeCertificate,
   reorderCertificates,
   onDeleteJobApplication,
+  validationErrors,
+  isValidationBlocked,
   onSyncRequest,
 }: ResumeAccordionPropsWithSync) => {
   const today = new Date().toISOString().split('T')[0]
@@ -155,6 +160,10 @@ const ResumeAccordion = ({
     }
     return entry.schoolName || `Education ${index + 1}`
   }
+  const certificateErrors = validationErrors.filter((err) => err.path[0] === 'certificates')
+  const certificateErrorMessages = certificateErrors.map((err) => err.message)
+  const trainingErrors = validationErrors.filter((err) => err.path[0] === 'trainings')
+  const trainingErrorMessages = trainingErrors.map((err) => err.message)
   const [activePanel, setActivePanel] = useState<ActivePanel>({ type: 'list' })
   const [dragEducationIndex, setDragEducationIndex] = useState<number | null>(null)
   const [dragEmploymentIndex, setDragEmploymentIndex] = useState<number | null>(null)
@@ -463,7 +472,7 @@ const ResumeAccordion = ({
         {trainings.map((entry, index) => (
           <div
             className={`section-row${dragTrainingIndex === index ? ' is-dragging' : ''}`}
-            key={entry.trainingId}
+            key={`${entry.trainingId || 'training'}-${index}`}
             onDragOver={(event) => event.preventDefault()}
             onDrop={() => handleDrop(dragTrainingIndex, index, reorderTrainings, setDragTrainingIndex)}
           >
@@ -495,7 +504,7 @@ const ResumeAccordion = ({
         {certificates.map((entry, index) => (
           <div
             className={`section-row${dragCertificateIndex === index ? ' is-dragging' : ''}`}
-            key={entry.certificateId}
+            key={`${entry.certificateId || 'certificate'}-${index}`}
             onDragOver={(event) => event.preventDefault()}
             onDrop={() => handleDrop(dragCertificateIndex, index, reorderCertificates, setDragCertificateIndex)}
           >
@@ -537,9 +546,13 @@ const ResumeAccordion = ({
           <button
             type="button"
             className="primary-button"
-            style={{ alignSelf: 'flex-start' }}
+            style={{
+              alignSelf: 'flex-start',
+              opacity: isSyncing || isValidationBlocked ? 0.5 : 1,
+              cursor: isSyncing || isValidationBlocked ? 'not-allowed' : 'pointer',
+            }}
             onClick={handlePDFDownload}
-            disabled={isSyncing}
+            disabled={isSyncing || isValidationBlocked}
           >
             {isSyncing ? 'Syncing & Generating PDF...' : 'Download PDF'}
           </button>
@@ -892,9 +905,34 @@ const ResumeAccordion = ({
       return renderList()
     }
 
+    const hasTrainingError = trainingErrorMessages.length > 0
+
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Training ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.trainingTitle !== '' && entry.trainingInstructor !== '' && entry.trainingDurationHours !== '' && entry.completionDate !== '')}
+        {renderEditorHeader(
+          `Training ${index + 1}`,
+          () => setActivePanel({ type: 'list' }),
+          !hasTrainingError &&
+            entry.trainingTitle !== '' &&
+            entry.trainingInstructor !== '' &&
+            entry.trainingDurationHours !== '' &&
+            entry.completionDate !== '',
+        )}
+        {hasTrainingError ? (
+          <div
+            className="bg-red-100 text-red-700 border-red-400"
+            style={{
+              backgroundColor: '#fee2e2',
+              color: '#b91c1c',
+              border: '1px solid #f87171',
+              borderRadius: '6px',
+              padding: '10px 12px',
+              marginBottom: '12px',
+            }}
+          >
+            {trainingErrorMessages.join(' ')}
+          </div>
+        ) : null}
         <div className="form-grid">
           <label>
             <p className="required-asterisk">Title</p>
@@ -967,9 +1005,34 @@ const ResumeAccordion = ({
       return renderList()
     }
 
+    const hasCertificateError = certificateErrorMessages.length > 0
+
     return (
       <div className="section-editor">
-        {renderEditorHeader(`Certificate ${index + 1}`, () => setActivePanel({ type: 'list' }), entry.certificateName !== '' && entry.issuingAuthority !== '' && entry.validityMonths !== '' && entry.dateIssued !== '')}
+        {renderEditorHeader(
+          `Certificate ${index + 1}`,
+          () => setActivePanel({ type: 'list' }),
+          !hasCertificateError &&
+            entry.certificateName !== '' &&
+            entry.issuingAuthority !== '' &&
+            entry.validityMonths !== '' &&
+            entry.dateIssued !== '',
+        )}
+        {hasCertificateError ? (
+          <div
+            className="bg-red-100 text-red-700 border-red-400"
+            style={{
+              backgroundColor: '#fee2e2',
+              color: '#b91c1c',
+              border: '1px solid #f87171',
+              borderRadius: '6px',
+              padding: '10px 12px',
+              marginBottom: '12px',
+            }}
+          >
+            {certificateErrorMessages.join(' ')}
+          </div>
+        ) : null}
         <div className="form-grid">
           <label>
             <p className="required-asterisk">Name</p>

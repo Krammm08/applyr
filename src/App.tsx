@@ -8,7 +8,9 @@ import HomePage from './pages/HomePage'
 import NewApplicationModal from './components/modals/NewApplicationModal'
 import Navbar from './components/Navbar'
 import { updateApplication as syncApplication, getResumeSettings, deleteApplication, getApplicationsForApplicant } from './services/applications'
+import { ZodError } from 'zod'
 import { ApplicationPayloadSchema } from './validation/applicationSchema'
+import { validateApplicationPayload, type ValidationError } from './utils/validation'
 import { loginUser, registerUser, getApplicantProfile, updateApplicantProfile, type AuthSession } from './services/auth'
 import type {
   Applicant,
@@ -300,6 +302,7 @@ function App() {
   const [hydratedStorageScope, setHydratedStorageScope] = useState(storageScope)
   const [isProfileHydrated, setIsProfileHydrated] = useState(!storedAuthSession?.user.id)
   const [showNewAppModal, setShowNewAppModal] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const navigate = useNavigate()
 
   const touchActiveApplication = () => {
@@ -553,7 +556,39 @@ function App() {
     jobApplications.find((application) => application.JobApplicationId === activeJobApplicationId) ??
     jobApplications[0]
 
+  const buildSyncPayload = () => {
+    if (!activeJobApplication) {
+      return null
+    }
+
+    return {
+      applicant,
+      jobApplication: {
+        ...activeJobApplication,
+        agreesToDrugTest: applicant.agreesToDrugTest ?? false,
+        JobApplicationStatus: 'Pending',
+      },
+      education: sanitizeEducation(education),
+      employmentHistory: sanitizeEmployment(employmentHistory),
+      trainings: sanitizeTrainings(activeJobApplication.trainings || []).map((item) => ({
+        ...item,
+        trainingId: item.trainingId || null,
+      })),
+      certificates: sanitizeCertificates(activeJobApplication.certificates || []).map((item) => ({
+        ...item,
+        certificateId: item.certificateId || null,
+      })),
+      references: sanitizeReferences(activeJobApplication.references || []),
+      resumeSettings: {
+        JobApplicationId: activeJobApplicationId,
+        resumeTemplate,
+        previewFont,
+      },
+    }
+  }
+
   const authenticated = Boolean(authSession?.token)
+  const isValidationBlocked = validationErrors.length > 0
   const requiresApplicantOnboarding =
     authenticated &&
     isProfileHydrated &&
@@ -884,41 +919,46 @@ function App() {
     }
   }, [activeJobApplicationId, authSession?.token, resumeSettingsMap])
 
-  // Explicit sync function - only called when user downloads PDF, exits to home, or on session recovery
-  const syncCurrentApplication = async () => {
-    if (!activeJobApplication) {
+  useEffect(() => {
+    const payload = buildSyncPayload()
+    if (!payload) {
+      setValidationErrors([])
       return
     }
 
-    const payload = {
-      applicant,
-      jobApplication: {
-        ...activeJobApplication,
-        agreesToDrugTest: applicant.agreesToDrugTest ?? false,
-        JobApplicationStatus: 'Pending',
-      },
-      education: sanitizeEducation(education),
-      employmentHistory: sanitizeEmployment(employmentHistory),
-      trainings: sanitizeTrainings(activeJobApplication.trainings || []).map((item) => ({
-        ...item,
-        trainingId: item.trainingId || null,
-      })),
-      certificates: sanitizeCertificates(activeJobApplication.certificates || []).map((item) => ({
-        ...item,
-        certificateId: item.certificateId || null,
-      })),
-      references: sanitizeReferences(activeJobApplication.references || []),
-      resumeSettings: {
-        JobApplicationId: activeJobApplicationId,
-        resumeTemplate,
-        previewFont,
-      },
+    const validation = validateApplicationPayload(payload, ApplicationPayloadSchema)
+    setValidationErrors(validation.success ? [] : validation.errors)
+  }, [
+    applicant,
+    activeJobApplication,
+    activeJobApplicationId,
+    education,
+    employmentHistory,
+    previewFont,
+    resumeTemplate,
+  ])
+
+  // Explicit sync function - only called when user downloads PDF, exits to home, or on session recovery
+  const syncCurrentApplication = async () => {
+    const payload = buildSyncPayload()
+    if (!payload) {
+      return
     }
-      console.log('syncPayload:', payload)
+
+    console.log('syncPayload:', payload)
     try {
       ApplicationPayloadSchema.parse(payload)
     } catch (err) {
       console.warn('Validation failed for payload, aborting sync:', err)
+      // if (err instanceof ZodError) {
+      //   const messages = err.issues.map((issue) => issue.message).filter(Boolean)
+      //   const messageBody = messages.length
+      //     ? messages.join('\n')
+      //     : 'Please fix the validation errors before syncing.'
+      //   alert(messageBody)
+      // } else {
+      //   alert('Please fix the validation errors before syncing.')
+      // }
       return
     }
 
@@ -1082,6 +1122,8 @@ function App() {
                 removeCertificate={removeCertificate}
                 reorderCertificates={reorderCertificates}
                 handleResumeUpload={handleResumeUpload}
+                validationErrors={validationErrors}
+                isValidationBlocked={isValidationBlocked}
                 onDeleteJobApplication={deleteJobApplication}
                 onSyncRequest={syncCurrentApplication}
               />

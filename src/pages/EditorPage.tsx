@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import ResumeAccordion from '../components/ResumeAccordion'
 import ResumePreview from '../components/ResumePreview'
+import type { ValidationError } from '../utils/validation'
 import type {
   Applicant,
   ApplicantReference,
@@ -51,6 +52,8 @@ export type EditorPageProps = {
   removeCertificate: (index: number) => void
   reorderCertificates: (fromIndex: number, toIndex: number) => void
   handleResumeUpload: (file: File | null) => Promise<void>
+  validationErrors: ValidationError[]
+  isValidationBlocked: boolean
 }
 
 const EditorPage = ({
@@ -92,6 +95,8 @@ const EditorPage = ({
   removeCertificate,
   reorderCertificates,
   handleResumeUpload,
+  validationErrors,
+  isValidationBlocked,
 }: EditorPageProps) => {
   const { applicationId } = useParams()
   const navigate = useNavigate()
@@ -200,6 +205,8 @@ const EditorPage = ({
             handleResumeUpload={handleResumeUpload}
             onDeleteJobApplication={handleDeleteJobApplication}
             onSyncRequest={onSyncRequest}
+            validationErrors={validationErrors}
+            isValidationBlocked={isValidationBlocked}
           />
         </section>
         <section

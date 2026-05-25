@@ -208,6 +208,28 @@ export const TrainingSchema = z.object({
   completionDate: ValidatedDateSchema,
 })
 
+const TrainingsArraySchema = z.array(TrainingSchema).superRefine((trainings, ctx) => {
+  const seen = new Map<string, number>()
+  trainings.forEach((training, index) => {
+    const trainingId = training.trainingId ? String(training.trainingId).trim() : ''
+    const title = training.trainingTitle ? training.trainingTitle.trim().toLowerCase() : ''
+    const instructor = training.trainingInstructor ? training.trainingInstructor.trim().toLowerCase() : ''
+    const key = trainingId ? `id:${trainingId}` : title ? `title:${title}|${instructor}` : ''
+
+    if (!key) return
+    if (seen.has(key)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [index, 'trainingTitle'],
+        message: 'You already added this training. Please update its details instead.',
+      })
+      return
+    }
+
+    seen.set(key, index)
+  })
+})
+
 export const CertificateSchema = z.object({
   certificateId: z.string().nullable().optional(),
   certificateName: z.string().min(1, 'Certificate name is required'),
@@ -276,7 +298,7 @@ export const ApplicationPayloadSchema = z.object({
   jobApplication: JobApplicationSchema,
   education: z.array(EducationSchema).optional(),
   employmentHistory: z.array(EmploymentSchema).optional(),
-  trainings: z.array(TrainingSchema).optional(),
+  trainings: TrainingsArraySchema.optional(),
   certificates: CertificatesArraySchema.optional(),
   references: z.array(ReferenceSchema).optional(),
   resumeSettings: z.object({ resumeTemplate: z.string().optional(), previewFont: z.string().optional() }).optional(),
