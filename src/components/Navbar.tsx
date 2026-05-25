@@ -8,29 +8,28 @@ type NavbarProps = {
   onLogout: () => void
 }
 
-const getBreadcrumb = (pathname: string) => {
-  if (pathname === '/') {
-    return ['Dashboard']
-  }
+// const getBreadcrumb = (pathname: string) => {
+//   if (pathname === '/') {
+//     return ['Dashboard']
+//   }
 
-  if (pathname.startsWith('/profile')) {
-    return ['Dashboard', 'My Profile']
-  }
+//   if (pathname.startsWith('/profile')) {
+//     return ['Dashboard', 'My Profile']
+//   }
 
-  if (pathname.startsWith('/applicant')) {
-    return ['Dashboard', 'Applicant Info']
-  }
+//   if (pathname.startsWith('/applicant')) {
+//     return ['Dashboard', 'Applicant Info']
+//   }
 
-  if (pathname.startsWith('/editor')) {
-    return ['Dashboard', 'Applicant Info', 'Editor']
-  }
+//   if (pathname.startsWith('/editor')) {
+//     return ['Dashboard', 'Applicant Info', 'Editor']
+//   }
 
-  return ['Dashboard']
-}
+//   return ['Dashboard']
+// }
 
 const Navbar = ({ authSession, onLogout }: NavbarProps) => {
   const location = useLocation()
-  const breadcrumb = getBreadcrumb(location.pathname)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -69,7 +68,11 @@ const Navbar = ({ authSession, onLogout }: NavbarProps) => {
 
   // Close dropdown when navigating
   useEffect(() => {
-    setIsDropdownOpen(false);
+    const timer = window.setTimeout(() => {
+      setIsDropdownOpen(false);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [location.pathname]);
 
   const getInitials = () => {

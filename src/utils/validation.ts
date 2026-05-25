@@ -29,12 +29,18 @@ export const validateApplicationPayload = (
     }
   } catch (error) {
     if (error instanceof ZodError) {
-      const zodIssues = error.issues ?? error.errors ?? []
-      const errors: ValidationError[] = zodIssues.map((err) => ({
-        field: err.path.join('.') || 'unknown',
-        message: err.message,
-        path: err.path,
-      }))
+      const zodIssues = error.issues ?? []
+      const errors: ValidationError[] = zodIssues.map((err) => {
+        const path = err.path.filter(
+          (segment): segment is string | number => typeof segment === 'string' || typeof segment === 'number'
+        )
+
+        return {
+          field: path.join('.') || 'unknown',
+          message: err.message,
+          path,
+        }
+      })
       return {
         success: false,
         errors,

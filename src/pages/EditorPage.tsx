@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import ResumeAccordion from '../components/ResumeAccordion'
 import ResumePreview from '../components/ResumePreview'
 import type { ValidationError } from '../utils/validation'
@@ -79,20 +79,20 @@ const EditorPage = ({
   updateReference,
   updateTraining,
   updateCertificate,
-  addEducation,
-  removeEducation,
+  // addEducation,
+  // removeEducation,
   reorderEducation,
-  addEmployment,
-  removeEmployment,
+  // addEmployment,
+  // removeEmployment,
   reorderEmployment,
   addReference,
   removeReference,
   reorderReferences,
-  addTraining,
-  removeTraining,
+  // addTraining,
+  // removeTraining,
   reorderTrainings,
-  addCertificate,
-  removeCertificate,
+  // addCertificate,
+  // removeCertificate,
   reorderCertificates,
   handleResumeUpload,
   validationErrors,
@@ -187,20 +187,20 @@ const EditorPage = ({
             updateReference={updateReference}
             updateTraining={updateTraining}
             updateCertificate={updateCertificate}
-            addEducation={addEducation}
-            removeEducation={removeEducation}
+            // addEducation={addEducation}
+            // removeEducation={removeEducation}
             reorderEducation={reorderEducation}
-            addEmployment={addEmployment}
-            removeEmployment={removeEmployment}
+            // addEmployment={addEmployment}
+            // removeEmployment={removeEmployment}
             reorderEmployment={reorderEmployment}
             addReference={addReference}
             removeReference={removeReference}
             reorderReferences={reorderReferences}
-            addTraining={addTraining}
-            removeTraining={removeTraining}
+            // addTraining={addTraining}
+            // removeTraining={removeTraining}
             reorderTrainings={reorderTrainings}
-            addCertificate={addCertificate}
-            removeCertificate={removeCertificate}
+            // addCertificate={addCertificate}
+            // removeCertificate={removeCertificate}
             reorderCertificates={reorderCertificates}
             handleResumeUpload={handleResumeUpload}
             onDeleteJobApplication={handleDeleteJobApplication}
