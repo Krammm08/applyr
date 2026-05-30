@@ -92,10 +92,7 @@ const ApplicantDetailsPage = ({
   const currentYear = new Date().getFullYear();
 
   const normalizePhoneInput = (value: string) => {
-    if (value.startsWith("09")) {
-      return value.replace(/\D/g, "");
-    }
-    return value;
+    return value.replace(/\D/g, "").slice(0, 11);
   };
 
   const isValidPhoneNumber = (value: string) => {
@@ -442,7 +439,9 @@ const ApplicantDetailsPage = ({
             <p>Company Phone</p>
             <input
               type="tel"
-              maxLength={12}
+              inputMode="numeric"
+              pattern="\d*"
+              maxLength={11}
               value={entry.companyPhone ?? ""}
               onChange={(event) =>
                 updateEmployment(
@@ -890,9 +889,12 @@ const ApplicantDetailsPage = ({
                   <input
                     id="phoneNumber"
                     type="tel"
+                    inputMode="numeric"
+                    pattern="\d*"
+                    maxLength={11}
                     value={applicant.phoneNumber || ""}
                     onChange={(e) =>
-                      updateApplicant("phoneNumber", e.target.value)
+                      updateApplicant("phoneNumber", normalizePhoneInput(e.target.value))
                     }
                     disabled={isValidationBlocked}
                   />

@@ -218,8 +218,16 @@ const ApplicantEditPage = ({
                   <label>
                     <p className="required-asterisk">Phone Number</p>
                     <input
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="\d*"
+                      maxLength={11}
                       value={phoneNumber}
-                      onChange={(event) => setPhoneNumber(event.target.value)}
+                      onChange={(event) =>
+                        setPhoneNumber(
+                          event.target.value.replace(/\D/g, "").slice(0, 11),
+                        )
+                      }
                       placeholder="e.g., 0917 123 4567"
                     />
                     {phoneNumber ? (

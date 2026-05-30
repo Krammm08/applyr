@@ -131,7 +131,15 @@ export const ApplicantSchema = z.object({
   applicantId: OptionalEntityIdSchema,
   applicantName: z.string().min(1),
   homeAddress: z.string().min(1),
-  phoneNumber: z.string().min(1),
+  phoneNumber: z.preprocess(
+    (value) => (typeof value === "string" ? value.replace(/\D/g, "") : value),
+    z
+      .string()
+      .min(1, { message: "Phone number is required" })
+      .regex(/^09\d{9}$/, {
+        message: "Phone number must be 11 digits (09XXXXXXXXX)",
+      }),
+  ),
   emailAddress: z.string().email(),
   linkedInUrl: z.string().optional().nullable(),
   citizenshipStatus: z.string().min(1),
@@ -325,7 +333,15 @@ export const ReferenceSchema = z.object({
   referenceName: z.string().min(1),
   referenceTitle: z.string().min(1),
   referenceCompany: z.string().min(1),
-  referencePhone: z.string().min(1),
+  referencePhone: z.preprocess(
+    (value) => (typeof value === "string" ? value.replace(/\D/g, "") : value),
+    z
+      .string()
+      .min(1, { message: "Reference phone is required" })
+      .regex(/^09\d{9}$/, {
+        message: "Reference phone must be 11 digits (09XXXXXXXXX)",
+      }),
+  ),
   referenceEmail: z.string().email().optional().nullable(),
 });
 
